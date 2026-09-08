@@ -20,7 +20,7 @@ final class AgentToolsTests: XCTestCase {
         let data = try XCTUnwrap(response.data(using: .utf8))
         let object = try XCTUnwrap(JSONSerialization.jsonObject(with: data) as? [String: Any])
         let tools = try XCTUnwrap((object["result"] as? [String: Any])?["tools"] as? [[String: Any]])
-        for name in ["agent_start", "agent_stop", "agent_status", "ui_tree", "ui_tap", "ui_press", "ui_swipe", "ui_type", "ui_button", "ui_alert", "ui_screenshot", "ui_find", "doctor"] {
+        for name in ["agent_start", "agent_stop", "agent_status", "ui_tree", "ui_tap", "ui_press", "ui_swipe", "ui_type", "ui_button", "ui_alert", "ui_screenshot", "ui_find", "agent_stream", "feedback", "doctor"] {
             XCTAssertNotNil(tools.first { $0["name"] as? String == name })
         }
     }

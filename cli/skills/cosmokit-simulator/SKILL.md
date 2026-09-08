@@ -49,6 +49,28 @@ cosmokit agent start
 - `defaults` — inspect app preferences.
 - `logs` — read a bounded simulator log window.
 
+## Hand-off
+
+After finishing a change, stream the simulator to the browser for human feedback:
+
+```sh
+cosmokit agent stream --open
+```
+
+Or print the URL and ask the user to open it in their IDE browser. Then wait for feedback:
+
+```sh
+cosmokit feedback next --wait 300
+```
+
+Act on each comment using its `ref` only if the screen hash is unchanged (until AGT-05 lands: re-read the tree and match by label/identifier). When done addressing the comment:
+
+```sh
+cosmokit feedback ack <seq>
+```
+
+Repeat until the user says stop. Never poll screenshots while waiting.
+
 ## Finish
 
 ```sh

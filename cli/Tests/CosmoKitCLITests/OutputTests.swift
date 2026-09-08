@@ -46,7 +46,7 @@ final class OutputTests: XCTestCase {
     }
 
     func testEveryErrorCodeRoundTrips() throws {
-        for code in [ErrorCode.usage, .deviceNotFound, .noSimulator, .simctlFailed, .unknownCommand, .driverUnavailable, .refStale, .refNotFound, .unsupported] {
+        for code in [ErrorCode.usage, .deviceNotFound, .noSimulator, .simctlFailed, .unknownCommand, .driverUnavailable, .refStale, .refNotFound, .unsupported, .timeout] {
             let data = try JSONEncoder().encode(code)
             XCTAssertEqual(try JSONDecoder().decode(ErrorCode.self, from: data), code)
         }

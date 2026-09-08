@@ -30,7 +30,7 @@ signed rather than notarized, so macOS quarantines it on download and you have
 to clear that yourself:
 
 ```sh
-tar xzf cosmokit-0.2.0-macos-universal.tar.gz
+tar xzf cosmokit-0.3.0-macos-universal.tar.gz
 xattr -d com.apple.quarantine cosmokit
 mv cosmokit /usr/local/bin/
 ```
@@ -83,6 +83,12 @@ cosmokit proxy-status                Read the inherited system proxy
 cosmokit agent start [name|udid]     Start the XCUITest simulator driver
 cosmokit agent stop [name|udid]      Stop the simulator driver
 cosmokit agent status [name|udid]    Check driver reachability
+cosmokit agent stream [name|udid] [--port 8878] [--open] [--fps 4] [--scale 0.5] Stream simulator to browser for feedback
+cosmokit agent stream stop [name|udid] Stop the browser stream
+cosmokit feedback next [--wait 300] [--json] Wait for the next human comment
+cosmokit feedback list [--json]      List all feedback comments
+cosmokit feedback ack <seq>          Mark feedback comment answered
+cosmokit feedback clear              Clear all feedback comments
 cosmokit ui tree                     Print the compact UI tree
 cosmokit ui tap <ref|x,y>            Tap an element or coordinate
 cosmokit ui press <ref>              Long-press an element
@@ -276,17 +282,37 @@ starts use the version/Xcode cache and are warm in roughly ten seconds.
 
 Install the Claude Code skill with `cp -r skills/cosmokit-simulator ~/.claude/skills/`.
 The MCP server additionally exposes `agent_start`, `agent_stop`, `agent_status`,
-`ui_tree`, `ui_tap`, `ui_press`, `ui_swipe`, `ui_type`, `ui_button`, `ui_alert`,
-`ui_screenshot`, `ui_find`, and `doctor`. Use `ui_tree` before `ui_screenshot`:
-tree output is compact and cheap, while a screenshot is for visual assertions.
+`agent_stream`, `feedback`, `ui_tree`, `ui_tap`, `ui_press`, `ui_swipe`,
+`ui_type`, `ui_button`, `ui_alert`, `ui_screenshot`, `ui_find`, and `doctor`.
+Use `ui_tree` before `ui_screenshot`: tree output is compact and cheap, while a
+screenshot is for visual assertions.
+
+## Follow along in the browser
+
+Stream the iOS Simulator live to a browser window where you can watch the AI agent work, click any element to inspect it, and leave targeted comments for the agent:
+
+```sh
+cosmokit agent stream --open
+```
+
+![CosmoKit Stream](examples/stream-page.png)
+
+Click anywhere on the live simulator frame to place a crosshair, view the resolved UI element (type, label, identifier, and frame), write a comment, and send it to the agent. The agent reads comments with `cosmokit feedback next` and acknowledges them with `cosmokit feedback ack <seq>`.
+
+### Security
+
+The stream binds to `127.0.0.1` only (never `0.0.0.0`) under a per-session random path prefix (`/s/<token>/...`), ensuring other local pages cannot post unauthorized feedback. Frames and feedback records are stored only on the local disk (`~/Library/Application Support/cosmokit/feedback/`) and never leave your Mac.
+
+> [!NOTE]
+> Codex CLI cannot open browser pages automatically; the command prints the stream URL on its first line so you can open it in your browser or IDE webview manually.
 
 ### Context cost
 
-The `tools/list` response is roughly 16.6 KB, or about 4,150 tokens at four
+The `tools/list` response is roughly 17.4 KB, or about 4,350 tokens at four
 bytes per token, loaded once per conversation by an MCP client. That is the
 deliberate price of keeping the full simulator surface in one server; splitting
 it would move complexity into every user's configuration. Reproduce the
-measurement with `printf '%s\n' '{"jsonrpc":"2.0","id":1,"method":"tools/list"}' | .build/release/cosmokit mcp | wc -c` from `cli/`; the 48-tool response measured 16,659 bytes including its newline, and a test keeps it under 18,330 bytes so growth cannot go unnoticed.
+measurement with `printf '%s\n' '{"jsonrpc":"2.0","id":1,"method":"tools/list"}' | .build/release/cosmokit mcp | wc -c` from `cli/`; the 50-tool response measured 17,401 bytes including its newline, and a test keeps it under 18,330 bytes so growth cannot go unnoticed.
 
 ### Proxy boundary
 

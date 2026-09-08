@@ -38,7 +38,7 @@ public struct CLIError: LocalizedError {
 }
 
 public enum CLI {
-    public static let version = "0.2.0"
+    public static let version = "0.3.0"
     public static var runSimctlForTesting: (_ arguments: [String]) throws -> String = { try Simctl.run($0) }
     public static var runSimctlTimedForTesting: (_ arguments: [String], _ timeout: TimeInterval) throws -> String = { try Simctl.run($0, timeout: $1) }
     public static var proxySourceForTesting: () -> [String: Any]? = { SCDynamicStoreCopyProxies(nil) as? [String: Any] }
@@ -95,6 +95,8 @@ public enum CLI {
           keychain-reset [name|udid]  Reset the simulator keychain
           proxy-status                Read the system proxy inherited by simulators
           agent start|stop|status     Start, stop, or inspect the UI driver
+          agent stream [options]      Stream simulator to browser for feedback
+          feedback next|list|ack|clear Read and manage human stream comments
           ui tree|tap|press|swipe     Inspect and drive the app UI
           ui type|button|alert        Type text or press UI/hardware controls
           ui screenshot|find          Capture or search the UI
@@ -496,12 +498,19 @@ public enum CLI {
             return CommandOutcome(human: proxyHumanText(payload), json: payload)
 
         case "agent":
-            guard let action = args.first, ["start", "stop", "status"].contains(action) else { throw usage("usage: cosmokit agent start|stop|status [name|udid] [--port N]") }
+            guard let action = args.first else { throw usage("usage: cosmokit agent start|stop|status|stream [name|udid] [--port N]") }
+            if action == "stream" {
+                return try performAgentStream(Array(args.dropFirst()))
+            }
+            guard ["start", "stop", "status"].contains(action) else { throw usage("usage: cosmokit agent start|stop|status|stream [name|udid] [--port N]") }
             let device = args.dropFirst().first(where: { !$0.hasPrefix("--") })
             if action == "status" { return CommandOutcome(human: Driver.status(device: device).running ? "Driver running" : "Driver stopped", json: Driver.status(device: device)) }
             if action == "stop" { let result = try Driver.stop(device: device); return CommandOutcome(human: result.message, json: result) }
             var port = 8877; if let index = args.firstIndex(of: "--port"), index + 1 < args.count, let value = Int(args[index + 1]) { port = value }
             let result = try Driver.start(device: device, port: port); return CommandOutcome(human: "Driver running on port \(result.port ?? port)", json: result)
+
+        case "feedback":
+            return try performFeedback(args)
 
         case "ui":
             return try performUI(args)
@@ -543,6 +552,149 @@ public enum CLI {
 
     private static func uiAction(_ path: String, args: [String]) throws -> CommandOutcome {
         var body: [String: Any] = [:]; if let first = args.first { if let ref = Int(first) { body["ref"] = ref } else if first.contains(",") { let values = first.split(separator: ",").compactMap { Double($0) }; if values.count == 2 { body["x"] = values[0]; body["y"] = values[1] } else { body["action"] = args.joined(separator: " ") } } else { body["action"] = args.joined(separator: " ") } }; if path == "/type" { body["text"] = args.joined(separator: " ") }; _ = try Driver.call(path, method: "POST", json: body); return CommandOutcome(human: "OK", json: DriverActionPayload(message: "OK"))
+    }
+
+    public static var startStreamForTesting: ((Device, Int, Double, Double, String) throws -> StreamStatusPayload)? = nil
+
+    private static func performAgentStream(_ args: [String]) throws -> CommandOutcome {
+        if args.first == "stop" {
+            let deviceQuery = args.dropFirst().first(where: { !$0.hasPrefix("--") })
+            let result = try StreamServer.stop(device: deviceQuery)
+            return CommandOutcome(human: result.message, json: result)
+        }
+        if args.first == "status" {
+            let deviceQuery = args.dropFirst().first(where: { !$0.hasPrefix("--") })
+            let status = StreamServer.status(device: deviceQuery)
+            return CommandOutcome(human: status.running ? "Stream running: \(status.url ?? "")" : "Stream stopped", json: status)
+        }
+
+        var port = 8878
+        var fps = 4.0
+        var scale = 0.5
+        var openBrowser = false
+        var daemon = false
+        var source = "simctl"
+        var deviceQuery: String? = nil
+
+        var index = 0
+        while index < args.count {
+            switch args[index] {
+            case "--port" where index + 1 < args.count:
+                if let val = Int(args[index + 1]) { port = val }
+                index += 2
+            case "--fps" where index + 1 < args.count:
+                if let val = Double(args[index + 1]) { fps = val }
+                index += 2
+            case "--scale" where index + 1 < args.count:
+                if let val = Double(args[index + 1]) { scale = val }
+                index += 2
+            case "--open":
+                openBrowser = true
+                index += 1
+            case "--daemon":
+                daemon = true
+                index += 1
+            case "--source" where index + 1 < args.count:
+                source = args[index + 1]
+                index += 2
+            default:
+                if !args[index].hasPrefix("--") && deviceQuery == nil {
+                    deviceQuery = args[index]
+                }
+                index += 1
+            }
+        }
+
+        let device = try resolveDevice(deviceQuery)
+
+        if let override = startStreamForTesting {
+            let status = try override(device, port, fps, scale, source)
+            return CommandOutcome(human: status.url ?? "http://127.0.0.1:\(port)/", json: status)
+        }
+
+        let server = StreamServer(port: port, device: device, fps: fps, scale: scale, source: source)
+        try server.start(openBrowser: openBrowser)
+
+        let status = StreamStatusPayload(running: true, port: port, pid: Int(ProcessInfo.processInfo.processIdentifier), url: server.url)
+
+        if daemon {
+            return CommandOutcome(human: server.url, json: status)
+        }
+
+        print(server.url)
+        fflush(stdout)
+
+        let sig = DispatchSource.makeSignalSource(signal: SIGINT, queue: .main)
+        sig.setEventHandler { exit(0) }
+        sig.resume()
+        signal(SIGINT, SIG_IGN)
+
+        RunLoop.current.run()
+        return CommandOutcome(human: server.url, json: status)
+    }
+
+    private static func performFeedback(_ args: [String]) throws -> CommandOutcome {
+        guard let action = args.first else {
+            throw usage("usage: cosmokit feedback next|list|ack|clear [name|udid] [options]")
+        }
+
+        switch action {
+        case "next":
+            var wait: Double = 0
+            var deviceQuery: String? = nil
+            var index = 1
+            while index < args.count {
+                if args[index] == "--wait" {
+                    if index + 1 < args.count, let val = Double(args[index + 1]) {
+                        wait = val
+                        index += 2
+                    } else {
+                        wait = 300
+                        index += 1
+                    }
+                } else if !args[index].hasPrefix("--") {
+                    deviceQuery = args[index]
+                    index += 1
+                } else {
+                    index += 1
+                }
+            }
+            let device = try resolveDevice(deviceQuery)
+            guard let record = FeedbackStore.nextUnread(udid: device.udid, wait: wait) else {
+                throw CLIError(commandError: CommandError(code: .timeout, message: "timed out waiting for feedback"))
+            }
+            let human = FeedbackStore.formatCompact(record)
+            return CommandOutcome(human: human, json: record)
+
+        case "list":
+            let deviceQuery = args.dropFirst().first(where: { !$0.hasPrefix("--") })
+            let device = try resolveDevice(deviceQuery)
+            let records = FeedbackStore.readAll(udid: device.udid)
+            let human = records.isEmpty ? "No feedback recorded." : records.map(FeedbackStore.formatCompact).joined(separator: "\n")
+            return CommandOutcome(human: human, json: FeedbackListPayload(records: records))
+
+        case "ack":
+            guard args.count > 1, let seq = Int(args[1]) else {
+                throw usage("usage: cosmokit feedback ack <seq> [name|udid]")
+            }
+            let deviceQuery = args.dropFirst(2).first(where: { !$0.hasPrefix("--") })
+            let device = try resolveDevice(deviceQuery)
+            guard let record = try FeedbackStore.ack(udid: device.udid, seq: seq) else {
+                throw CLIError(commandError: CommandError(code: .usage, message: "no feedback record with seq #\(seq)"))
+            }
+            let human = FeedbackStore.formatCompact(record)
+            return CommandOutcome(human: human, json: record)
+
+        case "clear":
+            let deviceQuery = args.dropFirst().first(where: { !$0.hasPrefix("--") })
+            let device = try resolveDevice(deviceQuery)
+            let count = try FeedbackStore.clear(udid: device.udid)
+            let human = "Cleared \(count) feedback record(s) on \(device.name)"
+            return CommandOutcome(human: human, json: FeedbackClearPayload(cleared: true, count: count))
+
+        default:
+            throw usage("unknown feedback action: \(action)")
+        }
     }
 
     public static func parseLocation(_ args: [String]) throws -> (latitude: Double, longitude: Double, query: String?) {

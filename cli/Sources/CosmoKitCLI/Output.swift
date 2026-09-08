@@ -20,6 +20,57 @@ public enum ErrorCode: String, Codable {
     case refStale
     case refNotFound
     case unsupported
+    case timeout
+}
+
+public struct FeedbackElementPayload: Codable, Equatable {
+    public let ref: Int
+    public let type: String
+    public let label: String?
+    public let identifier: String?
+    public let frame: UITreeFrame?
+    public init(ref: Int, type: String, label: String? = nil, identifier: String? = nil, frame: UITreeFrame? = nil) {
+        self.ref = ref; self.type = type; self.label = label; self.identifier = identifier; self.frame = frame
+    }
+}
+
+public struct FeedbackRecordPayload: Codable, Equatable {
+    public let seq: Int
+    public let at: String
+    public let x: Double
+    public let y: Double
+    public let element: FeedbackElementPayload
+    public let text: String
+    public let frame: String
+    public let branch: String?
+    public let worktree: String?
+    public let app: String?
+    public let udid: String
+    public var acked: Bool?
+    public init(seq: Int, at: String, x: Double, y: Double, element: FeedbackElementPayload, text: String, frame: String, branch: String? = nil, worktree: String? = nil, app: String? = nil, udid: String, acked: Bool? = false) {
+        self.seq = seq; self.at = at; self.x = x; self.y = y; self.element = element; self.text = text; self.frame = frame; self.branch = branch; self.worktree = worktree; self.app = app; self.udid = udid; self.acked = acked
+    }
+}
+
+public struct StreamStatusPayload: Codable, Equatable {
+    public let running: Bool
+    public let port: Int?
+    public let pid: Int?
+    public let url: String?
+    public init(running: Bool, port: Int? = nil, pid: Int? = nil, url: String? = nil) {
+        self.running = running; self.port = port; self.pid = pid; self.url = url
+    }
+}
+
+public struct FeedbackListPayload: Codable, Equatable {
+    public let records: [FeedbackRecordPayload]
+    public init(records: [FeedbackRecordPayload]) { self.records = records }
+}
+
+public struct FeedbackClearPayload: Codable, Equatable {
+    public let cleared: Bool
+    public let count: Int
+    public init(cleared: Bool, count: Int) { self.cleared = cleared; self.count = count }
 }
 
 public struct DriverStatusPayload: Codable {

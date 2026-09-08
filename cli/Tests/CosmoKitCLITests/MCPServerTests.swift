@@ -12,7 +12,7 @@ final class MCPServerTests: XCTestCase {
         ,"send_push", "list_location_scenarios", "run_location_scenario", "clear_location",
         "add_media", "get_pasteboard", "set_pasteboard", "read_defaults", "write_default",
         "delete_default", "get_logs", "list_runtimes", "proxy_status",
-        "agent_start", "agent_stop", "agent_status", "ui_tree", "ui_tap", "ui_press", "ui_swipe", "ui_type", "ui_button", "ui_alert", "ui_screenshot", "ui_find", "doctor"
+        "agent_start", "agent_stop", "agent_status", "ui_tree", "ui_tap", "ui_press", "ui_swipe", "ui_type", "ui_button", "ui_alert", "ui_screenshot", "ui_find", "agent_stream", "feedback", "doctor"
     ]
     private let orderedToolNames = [
         "list_simulators", "list_runtimes",
@@ -23,7 +23,7 @@ final class MCPServerTests: XCTestCase {
         "open_url", "send_push", "add_media", "get_pasteboard", "set_pasteboard",
         "set_location", "list_location_scenarios", "run_location_scenario", "clear_location",
         "read_defaults", "write_default", "delete_default", "get_logs", "proxy_status",
-        "agent_start", "agent_stop", "agent_status", "ui_tree", "ui_tap", "ui_press", "ui_swipe", "ui_type", "ui_button", "ui_alert", "ui_screenshot", "ui_find", "doctor"
+        "agent_start", "agent_stop", "agent_status", "ui_tree", "ui_tap", "ui_press", "ui_swipe", "ui_type", "ui_button", "ui_alert", "ui_screenshot", "ui_find", "agent_stream", "feedback", "doctor"
     ]
 
     override func tearDown() {
@@ -466,7 +466,7 @@ final class MCPServerTests: XCTestCase {
         let response = try object(for: #"{"jsonrpc":"2.0","id":1,"method":"tools/list"}"#)
         let result = response["result"] as! [String: Any]
         let tools = result["tools"] as! [[String: Any]]
-        XCTAssertEqual(tools.count, 48)
+        XCTAssertEqual(tools.count, 50)
         XCTAssertEqual(tools.compactMap { $0["name"] as? String }, orderedToolNames)
         XCTAssertEqual(Set(tools.compactMap { $0["name"] as? String }), toolNames)
         for tool in tools {
@@ -491,12 +491,12 @@ final class MCPServerTests: XCTestCase {
     }
 
     func testToolsListStaysWithinItsContextBudget() throws {
-        // The current response measured 16,658 bytes; 18,330 is approximately 10% headroom.
+        // The current response measured 17,400 bytes; 18,330 is the headroom budget cap.
         let response = try XCTUnwrap(MCPServer.handle(line: #"{"jsonrpc":"2.0","id":1,"method":"tools/list"}"#))
         let data = Data(response.utf8)
         let object = try jsonObject(response)
         let tools = (object["result"] as? [String: Any])?["tools"] as? [[String: Any]]
-        XCTAssertEqual(tools?.count, 48)
+        XCTAssertEqual(tools?.count, 50)
         XCTAssertLessThan(data.count, 18_330)
     }
 

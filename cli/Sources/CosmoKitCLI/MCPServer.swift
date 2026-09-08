@@ -214,6 +214,33 @@ public enum MCPServer {
         case "ui_screenshot":
             var args = ["screenshot"]; if let scale = arguments["scale"] { args += ["--scale", try scalarString(scale, key: "scale")] }; return ("ui", args + (try optionalString(arguments, key: "output").map { ["--output", $0] } ?? []), nil)
         case "ui_find": return ("ui", ["find", try requiredString(arguments, key: "text")], nil)
+        case "agent_stream":
+            let action = try optionalString(arguments, key: "action") ?? "start"
+            guard ["start", "stop", "status"].contains(action) else { throw usageError("action must be one of: start, stop, status") }
+            var args = ["stream"]
+            if action == "stop" || action == "status" {
+                args.append(action)
+                if let device = try optionalString(arguments, key: "device") { args.append(device) }
+            } else {
+                args.append("--daemon")
+                if let device = try optionalString(arguments, key: "device") { args.append(device) }
+                if let port = arguments["port"] { args += ["--port", try integerString(port, key: "port", battery: false)] }
+                if let open = arguments["open"] as? Bool, open { args.append("--open") }
+            }
+            return ("agent", args, nil)
+        case "feedback":
+            let action = try optionalString(arguments, key: "action") ?? "next"
+            guard ["next", "list", "ack", "clear"].contains(action) else { throw usageError("action must be one of: next, list, ack, clear") }
+            var args = [action]
+            if action == "ack" {
+                let seq = try requiredInt(arguments, key: "seq")
+                args.append(String(seq))
+            }
+            if action == "next", let wait = arguments["wait"] {
+                args += ["--wait", try scalarString(wait, key: "wait")]
+            }
+            if let device = try optionalString(arguments, key: "device") { args.append(device) }
+            return ("feedback", args, nil)
         case "doctor": return ("doctor", [], nil)
         default:
             throw CLIError(commandError: CommandError(code: .unknownCommand, message: "Unknown tool: \(tool)"))
@@ -499,6 +526,8 @@ public enum MCPServer {
             tool("ui_alert", "Accept, dismiss, or press a named simulator alert button.", properties: ["action": ["type": "string"]], required: ["action"]),
             tool("ui_screenshot", "Capture the UI as PNG; use ui_tree first and use this only when layout or visual appearance matters.", properties: ["scale": ["type": "number"], "output": ["type": "string"]], required: []),
             tool("ui_find", "Find UI elements by case-insensitive text in label, value, or identifier.", properties: ["text": ["type": "string"]], required: []),
+            tool("agent_stream", "Start, stop, or inspect the browser stream for interactive feedback.", properties: ["action": ["type": "string", "enum": ["start", "stop", "status"]], "device": device, "port": ["type": "integer"], "open": ["type": "boolean"]], required: []),
+            tool("feedback", "Read human feedback from stream (next/list), acknowledge (ack), or clear.", properties: ["action": ["type": "string", "enum": ["next", "list", "ack", "clear"]], "wait": ["type": "number"], "seq": ["type": "integer"], "device": device], required: []),
             tool("doctor", "Check Xcode, simctl, a booted simulator, driver cache/reachability, and proxy status without changing anything.", properties: [:], required: [])
         ]
     }
