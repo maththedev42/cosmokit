@@ -99,6 +99,7 @@ public enum CLI {
           feedback next|list|ack|clear Read and manage human stream comments
           ui tree|tap|press|swipe     Inspect and drive the app UI
           ui type|button|alert        Type text or press UI/hardware controls
+          ui wait|do                  Wait for elements or run action sequences
           ui screenshot|find          Capture or search the UI
           doctor                      Check local simulator and driver setup
           mcp                         Run as an MCP server over stdio (for AI agents)
@@ -212,11 +213,11 @@ public enum CLI {
         }
     }
 
-    public static func perform(command: String, args: [String], output: String?) throws -> CommandOutcome {
-        try perform(command: command, args: args, output: output, duration: nil)
+    public static func perform(command: String, args: [String], output: String? = nil, duration: Double? = nil) throws -> CommandOutcome {
+        try performInternal(command: command, args: args, output: output, duration: duration)
     }
 
-    public static func perform(command: String, args: [String], output: String?, duration: Double?) throws -> CommandOutcome {
+    private static func performInternal(command: String, args: [String], output: String?, duration: Double?) throws -> CommandOutcome {
         switch command {
         case "help", "--help", "-h":
             return CommandOutcome(human: usageText(), json: EmptyPayload())
@@ -524,13 +525,17 @@ public enum CLI {
     }
 
     private static func performUI(_ args: [String]) throws -> CommandOutcome {
-        guard let action = args.first else { throw usage("usage: cosmokit ui tree|tap|press|swipe|type|button|alert|screenshot|find") }
+        guard let action = args.first else { throw usage("usage: cosmokit ui tree|tap|press|swipe|type|button|alert|screenshot|find|wait|do") }
         switch action {
         case "tree":
             var mode = UITreeMode.act; var depth: String?; var max = 80; var app: String?; var index = 1
             while index < args.count { switch args[index] { case "--mode": guard index + 1 < args.count, let value = UITreeMode(rawValue: args[index + 1]) else { throw usage("mode must be nav, act, or debug") }; mode = value; index += 2; case "--depth": guard index + 1 < args.count else { throw usage("--depth requires a value") }; depth = args[index + 1]; index += 2; case "--max": guard index + 1 < args.count, let value = Int(args[index + 1]), value > 0 else { throw usage("--max requires a positive integer") }; max = value; index += 2; case "--app": guard index + 1 < args.count else { throw usage("--app requires a bundle id") }; app = args[index + 1]; index += 2; default: index += 1 } }
             var query: [String: Any] = [:]; if let depth { query["depth"] = Int(depth) ?? depth }; query["max_elements"] = max; if let app { query["app"] = app }
-            let data = try Driver.call("/tree", method: "GET", json: query); let snapshot = try UITree.parse(data); return CommandOutcome(human: UITree.compact(snapshot, mode: mode, maxLines: max), json: snapshot)
+            let data = try Driver.call("/tree", method: "GET", json: query)
+            var snapshot = try UITree.parse(data)
+            let hash = UITree.screenHash(snapshot)
+            snapshot.screen = hash
+            return CommandOutcome(human: UITree.compact(snapshot, mode: mode, maxLines: max), json: snapshot)
         case "find":
             guard args.count > 1 else { throw usage("ui find requires text") }; let snapshot = try UITree.parse(Driver.call("/tree")); let matches = UITree.find(snapshot, text: args.dropFirst().joined(separator: " ")); return CommandOutcome(human: matches.map { "[\($0.ref)] \($0.type) \($0.label ?? $0.value ?? "")" }.joined(separator: "\n"), json: matches)
         case "tap":
@@ -546,12 +551,183 @@ public enum CLI {
         case "screenshot":
             let output = args.firstIndex(of: "--output").flatMap { $0 + 1 < args.count ? args[$0 + 1] : nil } ?? FileManager.default.currentDirectoryPath
             let directory = URL(fileURLWithPath: output, isDirectory: true); try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true); let path = directory.appendingPathComponent("CosmoKit-UI-\(Int(Date().timeIntervalSince1970)).png").path; let data = try Driver.call("/screenshot"); try data.write(to: URL(fileURLWithPath: path)); return CommandOutcome(human: path, json: UIScreenshotPayload(path: path, width: 0, height: 0, bytes: data.count))
+        case "wait":
+            guard args.count > 1 else { throw usage("usage: cosmokit ui wait \"<text>\" [--timeout 10] [--gone] [--interval 0.3]") }
+            var text = ""
+            var timeout: Double = 10.0
+            var gone = false
+            var interval: Double = 0.3
+            var index = 1
+            while index < args.count {
+                switch args[index] {
+                case "--timeout" where index + 1 < args.count:
+                    if let val = Double(args[index + 1]) { timeout = val }
+                    index += 2
+                case "--interval" where index + 1 < args.count:
+                    if let val = Double(args[index + 1]) { interval = val }
+                    index += 2
+                case "--gone":
+                    gone = true
+                    index += 1
+                default:
+                    if !args[index].hasPrefix("--") && text.isEmpty {
+                        text = args[index]
+                    }
+                    index += 1
+                }
+            }
+            guard !text.isEmpty else { throw usage("ui wait requires search text") }
+
+            let start = Date()
+            while true {
+                let data = try Driver.call("/tree")
+                let snapshot = try UITree.parse(data)
+                let matches = UITree.find(snapshot, text: text)
+                if gone {
+                    if matches.isEmpty {
+                        let hash = UITree.screenHash(snapshot)
+                        let human = "screen: \(hash)\ngone: \"\(text)\""
+                        let payload = WaitPayload(screen: hash, ref: nil, element: nil, gone: true)
+                        return CommandOutcome(human: human, json: payload)
+                    }
+                } else {
+                    if let match = matches.first {
+                        let hash = UITree.screenHash(snapshot)
+                        let row = UITree.formatElement(match, mode: .act)
+                        let human = "screen: \(hash)\n\(row)"
+                        let elemPayload = FeedbackElementPayload(
+                            ref: match.ref,
+                            type: match.type,
+                            label: match.label,
+                            identifier: match.identifier,
+                            frame: match.frame
+                        )
+                        let payload = WaitPayload(screen: hash, ref: match.ref, element: elemPayload, gone: false)
+                        return CommandOutcome(human: human, json: payload)
+                    }
+                }
+                if Date().timeIntervalSince(start) >= timeout {
+                    throw CLIError(commandError: CommandError(
+                        code: .timeout,
+                        message: "Timed out waiting for \(gone ? "absence of " : "")\"\(text)\" after \(timeout)s"
+                    ))
+                }
+                Thread.sleep(forTimeInterval: interval)
+            }
+        case "do":
+            guard args.count > 1 else { throw usage("usage: cosmokit ui do [--screen <hash>] <step> [<step>...]") }
+            var screenHash: String? = nil
+            var steps: [String] = []
+            var index = 1
+            while index < args.count {
+                if args[index] == "--screen" && index + 1 < args.count {
+                    screenHash = args[index + 1]
+                    index += 2
+                } else {
+                    steps.append(args[index])
+                    index += 1
+                }
+            }
+            guard !steps.isEmpty else { throw usage("ui do requires at least one step") }
+
+            for (i, step) in steps.enumerated() {
+                var stepArgs = splitArguments(step)
+                if stepArgs.first == "ui" { stepArgs.removeFirst() }
+                if i == 0, let screenHash, !stepArgs.contains("--screen") {
+                    stepArgs += ["--screen", screenHash]
+                }
+                do {
+                    _ = try performUI(stepArgs)
+                } catch let error as CLIError {
+                    let stepNum = i + 1
+                    let msg = "Step \(stepNum) of \(steps.count) failed ('\(step)'): \(error.commandError.message)"
+                    let err = CommandError(
+                        code: error.commandError.code,
+                        message: msg,
+                        expected: error.commandError.expected,
+                        actual: error.commandError.actual
+                    )
+                    throw CLIError(commandError: err)
+                } catch {
+                    let stepNum = i + 1
+                    let msg = "Step \(stepNum) of \(steps.count) failed ('\(step)'): \(error.localizedDescription)"
+                    throw CLIError(commandError: CommandError(code: .usage, message: msg))
+                }
+            }
+
+            let data = try Driver.call("/tree")
+            var snapshot = try UITree.parse(data)
+            let hash = UITree.screenHash(snapshot)
+            snapshot.screen = hash
+            let human = UITree.compact(snapshot, mode: .act)
+            let payload = DoPayload(screen: hash, stepsCompleted: steps.count, totalSteps: steps.count, app: snapshot.app)
+            return CommandOutcome(human: human, json: payload)
         default: throw usage("unknown ui action \(action)")
         }
     }
 
+    public static func splitArguments(_ string: String) -> [String] {
+        var args: [String] = []
+        var current = ""
+        var inSingle = false
+        var inDouble = false
+        for ch in string {
+            if ch == "'" && !inDouble { inSingle.toggle(); continue }
+            if ch == "\"" && !inSingle { inDouble.toggle(); continue }
+            if ch == " " && !inSingle && !inDouble {
+                if !current.isEmpty { args.append(current); current = "" }
+                continue
+            }
+            current.append(ch)
+        }
+        if !current.isEmpty { args.append(current) }
+        return args
+    }
+
     private static func uiAction(_ path: String, args: [String]) throws -> CommandOutcome {
-        var body: [String: Any] = [:]; if let first = args.first { if let ref = Int(first) { body["ref"] = ref } else if first.contains(",") { let values = first.split(separator: ",").compactMap { Double($0) }; if values.count == 2 { body["x"] = values[0]; body["y"] = values[1] } else { body["action"] = args.joined(separator: " ") } } else { body["action"] = args.joined(separator: " ") } }; if path == "/type" { body["text"] = args.joined(separator: " ") }; _ = try Driver.call(path, method: "POST", json: body); return CommandOutcome(human: "OK", json: DriverActionPayload(message: "OK"))
+        var cleanArgs = args
+        if let screenIdx = cleanArgs.firstIndex(of: "--screen"), screenIdx + 1 < cleanArgs.count {
+            let expectedHash = cleanArgs[screenIdx + 1]
+            cleanArgs.removeSubrange(screenIdx...screenIdx + 1)
+            let data = try Driver.call("/tree")
+            let snapshot = try UITree.parse(data)
+            let actualHash = UITree.screenHash(snapshot)
+            if actualHash != expectedHash {
+                throw CLIError(commandError: CommandError(
+                    code: .screenChanged,
+                    message: "Screen changed (expected \(expectedHash), actual \(actualHash))",
+                    expected: expectedHash,
+                    actual: actualHash
+                ))
+            }
+        }
+        var body: [String: Any] = [:]
+        if let first = cleanArgs.first {
+            if let ref = Int(first) {
+                body["ref"] = ref
+            } else if first.contains(",") {
+                let values = first.split(separator: ",").compactMap { Double($0) }
+                if values.count == 2 {
+                    body["x"] = values[0]
+                    body["y"] = values[1]
+                } else {
+                    body["action"] = cleanArgs.joined(separator: " ")
+                }
+            } else {
+                body["action"] = cleanArgs.joined(separator: " ")
+            }
+        }
+        if path == "/type" {
+            if let intoIdx = cleanArgs.firstIndex(of: "--into"), intoIdx + 1 < cleanArgs.count, let ref = Int(cleanArgs[intoIdx + 1]) {
+                body["ref"] = ref
+                let textParts = cleanArgs.prefix(intoIdx)
+                body["text"] = textParts.joined(separator: " ")
+            } else {
+                body["text"] = cleanArgs.joined(separator: " ")
+            }
+        }
+        _ = try Driver.call(path, method: "POST", json: body)
+        return CommandOutcome(human: "OK", json: DriverActionPayload(message: "OK"))
     }
 
     public static var startStreamForTesting: ((Device, Int, Double, Double, String) throws -> StreamStatusPayload)? = nil

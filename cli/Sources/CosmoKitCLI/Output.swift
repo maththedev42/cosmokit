@@ -21,6 +21,7 @@ public enum ErrorCode: String, Codable {
     case refNotFound
     case unsupported
     case timeout
+    case screenChanged
 }
 
 public struct FeedbackElementPayload: Codable, Equatable {
@@ -97,13 +98,46 @@ public struct UIScreenshotPayload: Codable {
     public init(path: String, width: Int, height: Int, bytes: Int) { self.path = path; self.width = width; self.height = height; self.bytes = bytes }
 }
 
-public struct CommandError: Codable {
+public struct CommandError: Codable, Equatable {
     public let code: ErrorCode
     public let message: String
+    public let expected: String?
+    public let actual: String?
 
-    public init(code: ErrorCode, message: String) {
+    public init(code: ErrorCode, message: String, expected: String? = nil, actual: String? = nil) {
         self.code = code
         self.message = message
+        self.expected = expected
+        self.actual = actual
+    }
+}
+
+public struct WaitPayload: Codable, Equatable {
+    public let screen: String
+    public let ref: Int?
+    public let element: FeedbackElementPayload?
+    public let gone: Bool
+    public init(screen: String, ref: Int? = nil, element: FeedbackElementPayload? = nil, gone: Bool = false) {
+        self.screen = screen; self.ref = ref; self.element = element; self.gone = gone
+    }
+}
+
+public struct DoPayload: Codable, Equatable {
+    public let screen: String
+    public let stepsCompleted: Int
+    public let totalSteps: Int
+    public let app: String?
+    public init(screen: String, stepsCompleted: Int, totalSteps: Int, app: String? = nil) {
+        self.screen = screen; self.stepsCompleted = stepsCompleted; self.totalSteps = totalSteps; self.app = app
+    }
+}
+
+public struct DoFailurePayload: Codable, Equatable {
+    public let failedStep: Int
+    public let totalSteps: Int
+    public let error: CommandError
+    public init(failedStep: Int, totalSteps: Int, error: CommandError) {
+        self.failedStep = failedStep; self.totalSteps = totalSteps; self.error = error
     }
 }
 

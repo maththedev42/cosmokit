@@ -202,18 +202,40 @@ public enum MCPServer {
         case "ui_tree":
             var args = ["tree"]; if let mode = try optionalString(arguments, key: "mode") { guard ["nav", "act", "debug"].contains(mode) else { throw usageError("mode must be one of: nav, act, debug") }; args += ["--mode", mode] }; if let depth = arguments["depth"] { args += ["--depth", try integerString(depth, key: "depth", battery: false)] }; if let max = arguments["max"] { args += ["--max", try integerString(max, key: "max", battery: false)] }; if let app = try optionalString(arguments, key: "app") { args += ["--app", app] }; if let raw = arguments["raw"] as? Bool, raw { args.append("--raw") }; return ("ui", args, nil)
         case "ui_tap":
-            let ref = try optionalInt(arguments, key: "ref"); let x = try optionalDouble(arguments, key: "x"); let y = try optionalDouble(arguments, key: "y"); if ref == nil && (x == nil || y == nil) || ref != nil && (x != nil || y != nil) { throw usageError("ui_tap requires ref or both x and y") }; return ("ui", ["tap", ref.map(String.init) ?? "\(x!),\(y!)"], nil)
+            let ref = try optionalInt(arguments, key: "ref"); let x = try optionalDouble(arguments, key: "x"); let y = try optionalDouble(arguments, key: "y"); if ref == nil && (x == nil || y == nil) || ref != nil && (x != nil || y != nil) { throw usageError("ui_tap requires ref or both x and y") };
+            var args = ["tap", ref.map(String.init) ?? "\(x!),\(y!)"]
+            if let screen = try optionalString(arguments, key: "screen") { args += ["--screen", screen] }
+            return ("ui", args, nil)
         case "ui_press":
-            var args = ["press", String(try requiredInt(arguments, key: "ref"))]; if let seconds = arguments["seconds"] { args += ["--seconds", try scalarString(seconds, key: "seconds")] }; return ("ui", args, nil)
+            var args = ["press", String(try requiredInt(arguments, key: "ref"))]; if let seconds = arguments["seconds"] { args += ["--seconds", try scalarString(seconds, key: "seconds")] }
+            if let screen = try optionalString(arguments, key: "screen") { args += ["--screen", screen] }
+            return ("ui", args, nil)
         case "ui_swipe":
-            var args = ["swipe"]; if let direction = try optionalString(arguments, key: "direction") { args.append(direction) }; if let ref = try optionalInt(arguments, key: "ref") { args += ["--on", String(ref)] }; if let from = try optionalString(arguments, key: "from") { args.append(from) }; if let to = try optionalString(arguments, key: "to") { args.append(to) }; guard args.count > 1 else { throw usageError("ui_swipe requires direction or coordinates") }; return ("ui", args, nil)
+            var args = ["swipe"]; if let direction = try optionalString(arguments, key: "direction") { args.append(direction) }; if let ref = try optionalInt(arguments, key: "ref") { args += ["--on", String(ref)] }; if let from = try optionalString(arguments, key: "from") { args.append(from) }; if let to = try optionalString(arguments, key: "to") { args.append(to) }; guard args.count > 1 else { throw usageError("ui_swipe requires direction or coordinates") }
+            if let screen = try optionalString(arguments, key: "screen") { args += ["--screen", screen] }
+            return ("ui", args, nil)
         case "ui_type":
-            var args = ["type", try requiredString(arguments, key: "text")]; if let ref = try optionalInt(arguments, key: "ref") { args += ["--into", String(ref)] }; return ("ui", args, nil)
+            var args = ["type", try requiredString(arguments, key: "text")]; if let ref = try optionalInt(arguments, key: "ref") { args += ["--into", String(ref)] }
+            if let screen = try optionalString(arguments, key: "screen") { args += ["--screen", screen] }
+            return ("ui", args, nil)
         case "ui_button": return ("ui", ["button", try requiredString(arguments, key: "name")], nil)
         case "ui_alert": return ("ui", ["alert", try requiredString(arguments, key: "action")], nil)
         case "ui_screenshot":
             var args = ["screenshot"]; if let scale = arguments["scale"] { args += ["--scale", try scalarString(scale, key: "scale")] }; return ("ui", args + (try optionalString(arguments, key: "output").map { ["--output", $0] } ?? []), nil)
         case "ui_find": return ("ui", ["find", try requiredString(arguments, key: "text")], nil)
+        case "ui_wait":
+            let text = try requiredString(arguments, key: "text")
+            var args = ["wait", text]
+            if let timeout = arguments["timeout"] { args += ["--timeout", try scalarString(timeout, key: "timeout")] }
+            if let interval = arguments["interval"] { args += ["--interval", try scalarString(interval, key: "interval")] }
+            if let gone = arguments["gone"] as? Bool, gone { args.append("--gone") }
+            return ("ui", args, nil)
+        case "ui_do":
+            guard let steps = arguments["steps"] as? [String], !steps.isEmpty else { throw usageError("ui_do requires an array of step strings in steps") }
+            var args = ["do"]
+            if let screen = try optionalString(arguments, key: "screen") { args += ["--screen", screen] }
+            args += steps
+            return ("ui", args, nil)
         case "agent_stream":
             let action = try optionalString(arguments, key: "action") ?? "start"
             guard ["start", "stop", "status"].contains(action) else { throw usageError("action must be one of: start, stop, status") }
@@ -518,14 +540,16 @@ public enum MCPServer {
             tool("agent_stop", "Stop the XCUITest simulator driver when UI work is finished.", properties: ["device": device], required: []),
             tool("agent_status", "Check whether the XCUITest simulator driver is reachable.", properties: ["device": device], required: []),
             tool("ui_tree", "Inspect the compact UI tree; use this before ui_screenshot because it is much cheaper, and use a screenshot only when visual layout matters. In debug mode, raw may return the JSON snapshot.", properties: ["mode": ["type": "string", "enum": ["nav", "act", "debug"]], "depth": ["type": "integer"], "max": ["type": "integer"], "app": ["type": "string"], "raw": ["type": "boolean"]], required: []),
-            tool("ui_tap", "Tap a UI reference from the latest ui_tree or provide both x and y coordinates.", properties: ["ref": ["type": "integer"], "x": ["type": "number"], "y": ["type": "number"]], required: []),
-            tool("ui_press", "Long press a UI reference for an optional number of seconds.", properties: ["ref": ["type": "integer"], "seconds": ["type": "number"]], required: ["ref"]),
-            tool("ui_swipe", "Swipe by direction, optionally on a UI reference, or between coordinate strings.", properties: ["direction": ["type": "string", "enum": ["up", "down", "left", "right"]], "ref": ["type": "integer"], "from": ["type": "string"], "to": ["type": "string"]], required: []),
-            tool("ui_type", "Type text, optionally tapping a UI reference first.", properties: ["text": ["type": "string"], "ref": ["type": "integer"]], required: ["text"]),
+            tool("ui_tap", "Tap a UI reference from the latest ui_tree or provide both x and y coordinates.", properties: ["ref": ["type": "integer"], "x": ["type": "number"], "y": ["type": "number"], "screen": ["type": "string"]], required: []),
+            tool("ui_press", "Long press a UI reference for an optional number of seconds.", properties: ["ref": ["type": "integer"], "seconds": ["type": "number"], "screen": ["type": "string"]], required: ["ref"]),
+            tool("ui_swipe", "Swipe by direction, optionally on a UI reference, or between coordinate strings.", properties: ["direction": ["type": "string", "enum": ["up", "down", "left", "right"]], "ref": ["type": "integer"], "from": ["type": "string"], "to": ["type": "string"], "screen": ["type": "string"]], required: []),
+            tool("ui_type", "Type text, optionally tapping a UI reference first.", properties: ["text": ["type": "string"], "ref": ["type": "integer"], "screen": ["type": "string"]], required: ["text"]),
             tool("ui_button", "Press a simulator hardware button: home, volume-up, volume-down, or siri.", properties: ["name": ["type": "string", "enum": ["home", "volume-up", "volume-down", "siri"]]], required: ["name"]),
             tool("ui_alert", "Accept, dismiss, or press a named simulator alert button.", properties: ["action": ["type": "string"]], required: ["action"]),
             tool("ui_screenshot", "Capture the UI as PNG; use ui_tree first and use this only when layout or visual appearance matters.", properties: ["scale": ["type": "number"], "output": ["type": "string"]], required: []),
             tool("ui_find", "Find UI elements by case-insensitive text in label, value, or identifier.", properties: ["text": ["type": "string"]], required: []),
+            tool("ui_wait", "Wait for an element matching text to appear, or to disappear with gone.", properties: ["text": ["type": "string"], "timeout": ["type": "number"], "gone": ["type": "boolean"], "interval": ["type": "number"]], required: ["text"]),
+            tool("ui_do", "Run an ordered sequence of UI steps, stopping at the first failure.", properties: ["steps": ["type": "array", "items": ["type": "string"]], "screen": ["type": "string"]], required: ["steps"]),
             tool("agent_stream", "Start, stop, or inspect the browser stream for interactive feedback.", properties: ["action": ["type": "string", "enum": ["start", "stop", "status"]], "device": device, "port": ["type": "integer"], "open": ["type": "boolean"]], required: []),
             tool("feedback", "Read human feedback from stream (next/list), acknowledge (ack), or clear.", properties: ["action": ["type": "string", "enum": ["next", "list", "ack", "clear"]], "wait": ["type": "number"], "seq": ["type": "integer"], "device": device], required: []),
             tool("doctor", "Check Xcode, simctl, a booted simulator, driver cache/reachability, and proxy status without changing anything.", properties: [:], required: [])

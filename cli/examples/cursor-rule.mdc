@@ -5,13 +5,15 @@ alwaysApply: false
 ---
 
 Use `cosmokit doctor` and then `cosmokit agent start` before driving an iOS
-app. Read `cosmokit ui tree --mode act` first, decide using refs, perform one
-action such as `ui tap <ref>` or `ui type`, and read one fresh tree afterward.
-Prefer refs over coordinates, `act` over `debug`, and `--max` for long screens.
-Use a screenshot only when visual layout matters. On `refStale`, take a new
-tree; on `driverUnavailable`, start the agent; if the keyboard is not up, tap
-the field first. After finishing a change, run `cosmokit agent stream --open`
-(or print the URL for the IDE browser), then `cosmokit feedback next --wait 300`;
-act on each comment using its ref (re-reading the tree to match by label/identifier
-if changed) and `feedback ack <seq>` when done, repeating until the user says stop.
-Never poll screenshots while waiting. Stop with `cosmokit agent stop`.
+app. Read `cosmokit ui tree --mode act` first (note the `screen:` hash),
+decide using refs, perform actions with `--screen <hash>` (or run a known sequence
+with `cosmokit ui do`), and use `cosmokit ui wait "<text>"` instead of polling trees.
+Re-read the tree only when wait finishes or if an action fails with `screenChanged`
+or `refStale`. Prefer refs over coordinates, `act` over `debug`, and `--max` for
+long screens. Use a screenshot only when visual layout matters. On `driverUnavailable`,
+start the agent; if the keyboard is not up, tap the field first. After finishing a
+change, run `cosmokit agent stream --open` (or print the URL for the IDE browser),
+then `cosmokit feedback next --wait 300`; act on each comment using its ref
+(re-reading the tree to match by label/identifier if changed) and `feedback ack <seq>`
+when done, repeating until the user says stop. Never poll screenshots while waiting.
+Stop with `cosmokit agent stop`.

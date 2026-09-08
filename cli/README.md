@@ -90,6 +90,8 @@ cosmokit feedback list [--json]      List all feedback comments
 cosmokit feedback ack <seq>          Mark feedback comment answered
 cosmokit feedback clear              Clear all feedback comments
 cosmokit ui tree                     Print the compact UI tree
+cosmokit ui wait "<text>" [--timeout 10] [--gone] [--interval 0.3] Wait for UI element to appear or disappear
+cosmokit ui do <step> [<step>...]        Run a sequence of UI actions
 cosmokit ui tap <ref|x,y>            Tap an element or coordinate
 cosmokit ui press <ref>              Long-press an element
 cosmokit ui swipe <direction>        Swipe up, down, left, or right
@@ -135,6 +137,7 @@ The stable error codes are:
 | `simctlFailed` | `xcrun simctl` returned a failure. |
 | `unknownCommand` | The command or tool name is not recognised. |
 | `driverUnavailable` | The XCUITest driver is not reachable; start it first. |
+| `screenChanged` | The UI changed since the tree read; retry with a fresh hash and refs. |
 | `refStale` | A UI reference belongs to an older tree snapshot. |
 | `refNotFound` | No element exists for the requested UI reference. |
 | `unsupported` | The driver or simulator cannot perform the requested action. |
@@ -270,8 +273,10 @@ starts use the version/Xcode cache and are warm in roughly ten seconds.
 
 | Command | Purpose |
 | --- | --- |
-| `ui tree --mode act` | List interactive elements and stable refs. |
-| `ui tap <ref>` | Tap the element identified by the latest tree. |
+| `ui tree --mode act` | List interactive elements, stable refs, and screen hash. |
+| `ui wait "<text>" [--gone]` | Wait until text appears or disappears. |
+| `ui do "tap @e1" "type hello"` | Run a sequence of UI actions stopping on failure. |
+| `ui tap <ref> [--screen <hash>]` | Tap the element identified by the latest tree. |
 | `ui press <ref> --seconds 1` | Long-press an element. |
 | `ui swipe up --on <ref>` | Swipe relative to an element. |
 | `ui type "text" --into <ref>` | Type after focusing a field. |
@@ -282,8 +287,8 @@ starts use the version/Xcode cache and are warm in roughly ten seconds.
 
 Install the Claude Code skill with `cp -r skills/cosmokit-simulator ~/.claude/skills/`.
 The MCP server additionally exposes `agent_start`, `agent_stop`, `agent_status`,
-`agent_stream`, `feedback`, `ui_tree`, `ui_tap`, `ui_press`, `ui_swipe`,
-`ui_type`, `ui_button`, `ui_alert`, `ui_screenshot`, `ui_find`, and `doctor`.
+`agent_stream`, `feedback`, `ui_tree`, `ui_wait`, `ui_do`, `ui_tap`, `ui_press`,
+`ui_swipe`, `ui_type`, `ui_button`, `ui_alert`, `ui_screenshot`, `ui_find`, and `doctor`.
 Use `ui_tree` before `ui_screenshot`: tree output is compact and cheap, while a
 screenshot is for visual assertions.
 
@@ -308,11 +313,11 @@ The stream binds to `127.0.0.1` only (never `0.0.0.0`) under a per-session rando
 
 ### Context cost
 
-The `tools/list` response is roughly 17.4 KB, or about 4,350 tokens at four
+The `tools/list` response is roughly 18.0 KB, or about 4,500 tokens at four
 bytes per token, loaded once per conversation by an MCP client. That is the
 deliberate price of keeping the full simulator surface in one server; splitting
 it would move complexity into every user's configuration. Reproduce the
-measurement with `printf '%s\n' '{"jsonrpc":"2.0","id":1,"method":"tools/list"}' | .build/release/cosmokit mcp | wc -c` from `cli/`; the 50-tool response measured 17,401 bytes including its newline, and a test keeps it under 18,330 bytes so growth cannot go unnoticed.
+measurement with `printf '%s\n' '{"jsonrpc":"2.0","id":1,"method":"tools/list"}' | .build/release/cosmokit mcp | wc -c` from `cli/`; the 52-tool response measured 18,038 bytes including its newline, and a test keeps it under 18,330 bytes so growth cannot go unnoticed.
 
 ### Proxy boundary
 

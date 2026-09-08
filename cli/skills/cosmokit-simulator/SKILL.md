@@ -17,14 +17,19 @@ cosmokit agent start
 
 ## Loop
 
-1. Read the screen with `cosmokit ui tree --mode act`.
+1. Read the screen with `cosmokit ui tree --mode act` (note the `screen: <hash>` on the first line).
 2. Decide from the returned refs and labels.
-3. Act with `cosmokit ui tap <ref>`, `cosmokit ui type "text"`, or another `ui` command.
-4. Read one fresh `cosmokit ui tree` after the action.
-5. Use `cosmokit ui screenshot` only when visual layout, spacing, or rendering matters.
+3. Act with `cosmokit ui tap <ref> --screen <hash>`, `cosmokit ui type "text" --screen <hash>`, or another `ui` command.
+4. Wait for the expected change with `cosmokit ui wait "Expected text"` (or `--gone` if waiting for an element to disappear).
+5. Re-read `cosmokit ui tree` only if `wait` failed or when branching decisions are needed.
+6. Use `cosmokit ui do` for action sequences already known (`cosmokit ui do 'tap 3' 'wait "Welcome"'`).
+7. Use `cosmokit ui screenshot` only when visual layout, spacing, or rendering matters.
 
 ## Cost and safety rules
 
+- Always pass `--screen <hash>` with action commands to guard against acting on a changed screen.
+- Prefer `ui wait` instead of polling `ui tree`.
+- Use `ui do` to run known multi-step action sequences with one final tree read.
 - Prefer refs from the latest tree over coordinates.
 - Prefer `act` over `debug`; use `debug` only when identifiers or containers matter.
 - Pass `--max` on long screens.
@@ -33,8 +38,10 @@ cosmokit agent start
 
 ## Recovery
 
+- `screenChanged`: the UI changed since the last read; take a fresh tree and retry with the updated hash and refs.
 - `refStale`: take a new tree and use its new ref.
 - `driverUnavailable`: run `cosmokit agent start` and retry once.
+- `timeout`: if `ui wait` timed out, inspect the screen with `cosmokit ui tree`.
 - If the keyboard is not up, tap the text field first, then type.
 - If the app is missing, use the existing `boot`, `install`, and `launch` commands.
 
