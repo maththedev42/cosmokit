@@ -212,6 +212,53 @@
         }
       ],
       "publishedAt": "2026-09-02T00:00:00Z"
+    },
+    {
+      "version": "4.7.0",
+      "title": {
+        "en": "Network conditions in the proxy",
+        "pt": "Condições de rede no proxy",
+        "es": "Condiciones de red en el proxy"
+      },
+      "items": [
+        {
+          "icon": "antenna.radiowaves.left.and.right",
+          "iconColor": "purple",
+          "localizations": {
+            "en": {
+              "title": "Test on Edge, 3G and LTE without leaving your desk",
+              "description": "Pick a preset or set your own latency, bandwidth and packet loss, and the proxy shapes every request the Simulator makes — no SDK in your app."
+            },
+            "pt": {
+              "title": "Teste em Edge, 3G e LTE sem sair da mesa",
+              "description": "Escolha um preset ou defina latência, banda e perda de pacotes, e o proxy modela cada requisição do Simulador — sem SDK no seu app."
+            },
+            "es": {
+              "title": "Prueba en Edge, 3G y LTE sin moverte del escritorio",
+              "description": "Elige un preset o define tu propia latencia, ancho de banda y pérdida de paquetes, y el proxy modela cada petición del Simulador — sin SDK en tu app."
+            }
+          }
+        },
+        {
+          "icon": "slider.horizontal.3",
+          "iconColor": "blue",
+          "localizations": {
+            "en": {
+              "title": "Rules per host",
+              "description": "Slow down only your API, keep images fast, or take one endpoint offline — conditions apply per host, so you can reproduce the exact situation a user reported."
+            },
+            "pt": {
+              "title": "Regras por host",
+              "description": "Deixe só a sua API lenta, mantenha as imagens rápidas ou tire um endpoint do ar — as condições valem por host, para reproduzir exatamente o cenário que um usuário relatou."
+            },
+            "es": {
+              "title": "Reglas por host",
+              "description": "Ralentiza solo tu API, mantén las imágenes rápidas o deja un endpoint sin conexión — las condiciones se aplican por host, para reproducir justo la situación que reportó un usuario."
+            }
+          }
+        }
+      ],
+      "publishedAt": "2026-09-09T00:00:00Z"
     }
   ],
   "notifications": [
