@@ -230,4 +230,61 @@ stays as the reference until it moves into the repo.
 
 - 2026-09-12 21:50 BRT: ADS-10b landed (`cc33134` merged to `main`, pushed, `api-main` ff, API restarted on :3003, MCP rebuilt). 4 Reddit multi-creative unit tests in `reddit_test.go` (3 creatives, 6 capped at 5 + warning, imageless skipped + warning, ad #2 fails -> cleanup), `RecordCampaignResult` metadata patch condition (> 1 ads) in `store_platform_runner.go` with test, `handlers_campaigns_ad_insights` fallback to metadata ads, and `cosmohq_ad_campaigns` per-ad detail read-back with tests. Prompt files `ADS-10` and `ADS-10b` removed.
 
-- 2026-09-13: ADS-11 landed as `6c17a13` on `ads/11-add-creative` and is ready to merge. `cosmohq_ad_campaign_control` now supports confirmed `add_creative`: approved image creatives are uploaded, posted, added to the existing Reddit ad group with inherited click URL and lifecycle status, then recorded in `metadata.ads[]`/`externalAdIds` and attached locally. Reddit fake-endpoint tests cover ACTIVE/PAUSED creation and invalid-asset abort; MCP read-back coverage added. No live Reddit call was made.
+- 2026-09-13 (later): ADS-11 is on `main` (`7566203`, "merge: add creative control for Reddit campaigns"), and the `api-main` worktree is at `7566203`.
+
+---
+
+## Addendum 2026-09-13 — all the numbers, and every login, from the MCP (NUM-01..04)
+
+The owner asked for "all the numbers" (sales, installs, funnel, ads) and
+wants all of it available through the CosmoHQ MCP, logins included. Today's
+check hit four walls:
+
+- **Sales:** RevenueCat was only reachable in Chrome, and it timed out three
+  times. The API already syncs RevenueCat (`internal/iap`, routes
+  `/v1/apps/{id}/iap-*`), but no MCP tool reads it, and it's unknown
+  whether CosmoKit's key is stored.
+- **Google Ads:** `invalid_grant` since 2026-09-12 15:44.
+  `cosmohq_google_reauth` returns a URL that needs the :3002 web app, and
+  nothing waits for or verifies the callback.
+- **Reddit Ads:** the campaign row shows ACTIVE with 0 impressions and no
+  review status, so approved, pending and rejected look the same.
+- **Reddit organic:** `cosmohq_reddit_post_stats` gets 403 from Reddit's
+  public JSON (checked with curl and the tool's User-Agent, 2026-09-13),
+  so every recorded post shows null score.
+
+| id | tools | depends on |
+|---|---|---|
+| NUM-01 | `cosmohq_sales` (overview / timeline / events / refresh); `GET /v1/apps/{id}/iap-overview` if missing; typed `revenuecat_not_connected` | — |
+| NUM-02 | Reddit ad review status in health and `cosmohq_ad_campaigns`; `GET /v1/growth/apps/{appId}/reddit/post-stats` via oauth.reddit.com; `cosmohq_reddit_post_stats` switched to it | — |
+| NUM-03 | `cosmohq_connect` (google / reddit / revenuecat): loopback listener in the MCP, browser opened, waits, returns the credential test; Reddit OAuth start and callback routes; local key page so no secret passes through chat; `cosmohq_google_reauth` becomes an alias | NUM-01 for the RevenueCat half |
+| NUM-04 | `cosmohq_app_numbers`: installs, sales, funnel, paid, organic, same-definition ratios, and `blocked[]` with the fixing call | NUM-01, NUM-02 |
+
+Order: NUM-01 and NUM-02 in parallel, then NUM-03 and NUM-04 (also parallel).
+
+### Rules for the NUM prompts (on top of the rules above)
+
+- **Where to work.**
+  - Work in a new worktree off `main`
+    (`git worktree add .tanya/worktrees/r-ms-num-0X -b feat/mcp-num-0X main`).
+  - Never use the root checkout (it's on `feature/whatsapp-automations`
+    with another session's edits).
+  - Never use `.tanya/worktrees/api-main` (it serves :3003).
+  - After merging to `main`: fast-forward `api-main`, rebuild
+    `~/.local/bin/cosmohq-mcp`, and restart the API **only with the
+    owner's OK**. Then remove the worktree.
+- **No secret through the chat.** Credential values never appear in MCP
+  arguments, output, logs, test fixtures or commits. The loopback key page
+  (NUM-03) is the only way secrets get in.
+- **Loopback listeners** bind 127.0.0.1 only: one-shot, nonce-checked,
+  5-minute timeout, no query or body logging.
+- **Never merge definitions.** Platform conversions aren't installs.
+  PostHog `purchase_completed` includes trials. Tracking clicks are per
+  `ct`, not per post. Currencies are never summed together.
+- **Live gates:**
+  - Reads on CosmoKit `cmn9cnfhx000rwb79k5sxx17p` need no go-ahead.
+  - Logins need the owner at the keyboard.
+  - A new route is only live after the API restart. Without the owner's
+    OK, prove it in Go tests and record the live read as pending. `cosmohq_ad_campaign_control` now supports confirmed `add_creative`: approved image creatives are uploaded, posted, added to the existing Reddit ad group with inherited click URL and lifecycle status, then recorded in `metadata.ads[]`/`externalAdIds` and attached locally. Reddit fake-endpoint tests cover ACTIVE/PAUSED creation and invalid-asset abort; MCP read-back coverage added. No live Reddit call was made.
+
+- 2026-09-13: NUM-03 implemented on `feat/mcp-num-03-connect`. `cosmohq_connect` added to MCP with 127.0.0.1-only loopback listener, nonce protection, and local key entry page (`/keys`) to avoid secret exposure in chat. Routes `GET /v1/growth/reddit-oauth/start` and `GET /v1/growth/reddit-oauth/callback` mounted in growth API; Reddit OAuth uses fixed loopback port 8765 and scopes `adsread adsedit read`. Automated tests pass (`cmd/cosmohq-mcp`, `internal/growth`). Live gates (Google re-auth consent, RevenueCat key submission & refresh test, Reddit OAuth rotation and redirect URI) skipped pending owner presence and API restart on :3003.
