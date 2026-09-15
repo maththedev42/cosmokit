@@ -264,6 +264,15 @@ Order: NUM-01 and NUM-02 in parallel, then NUM-03 and NUM-04 (also parallel).
 
 ### Rules for the NUM prompts (on top of the rules above)
 
+**Never point ANY worktree's API process or a `goose up` run at the shared
+database (`localhost:5434/cosmohq`, the one `:3003` reads) before merge +
+restart + owner OK — not even to apply "just the schema". Migrations and
+backfills for an unmerged branch run against a throwaway local Postgres
+instance (`docker run --rm -p 5555:5432 -e POSTGRES_PASSWORD=x postgres:17`,
+goose pointed at that) or don't run at all until the merge gate is met.**
+(This is the mistake CH-01's backfill made on 2026-09-13; see
+`../channels/CH-00-fix-corrupted-production-data.md`.)
+
 - **Where to work.**
   - Work in a new worktree off `main`
     (`git worktree add .tanya/worktrees/r-ms-num-0X -b feat/mcp-num-0X main`).
