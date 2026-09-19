@@ -121,20 +121,87 @@ export const FEATURE_PAGES: FeaturePageDef[] = [
   {
     slug: "control-panel",
     title: "One panel for every simulator switch",
-    subtitle: "Manage devices, diagnostics, presets, and disk space in one place.",
+    subtitle:
+      "Manage app profiles, scheme diagnostics, dev presets, and disk cleanup from a single unified macOS control panel.",
     metaTitle: "Control Panel | CosmoKit for iOS Simulator",
     metaDescription:
-      "All your iOS Simulator controls, diagnostics, presets, and disk cleanup in one panel.",
-    cardBlurb: "Control, boot, clean, and manage all your simulators in one unified panel.",
+      "All your iOS Simulator controls in one place: app profiles, runtime diagnostics, dev presets, menu bar shortcuts, and Disk Doctor cleanup.",
+    cardBlurb:
+      "Control, boot, diagnose, and clean all your simulators in one unified panel.",
     blocks: [
       {
-        title: "Coming soon",
-        body: "Full feature details are coming soon.",
-        bullets: [],
+        title: "App profiles with isolated environments",
+        subtitle: "Saved configurations per bundle ID",
+        body: "Configure launch arguments, environment variables, appearance overrides, and locale settings saved specifically per application. Switch between production and staging configs or test localized layouts with one-click Save & Relaunch.",
+        bullets: [
+          "Save isolated launch arguments and environment variables per app",
+          "Override system appearance, language, and regional locale",
+          "One-click Save & Relaunch to restart the app with updated flags",
+          "Organize and manage profiles across all installed simulator apps",
+        ],
+        image: {
+          src: "/screenshots/store/en/profiles.webp",
+          alt: "CosmoKit App Profiles configuration",
+        },
+      },
+      {
+        title: "Scheme diagnostics without Xcode scheme editing",
+        subtitle: "Toggle runtime sanitizers and debug flags instantly",
+        body: "Enable critical runtime diagnostic tools without opening Xcode scheme editors or rebuilding your project. Catch memory corruption, threading violations, and database performance bottlenecks on demand.",
+        bullets: [
+          "Enable Zombies (NSZombieEnabled) to catch messages to deallocated objects",
+          "Run Main Thread Checker to detect background thread UI API calls",
+          "Toggle Malloc stack logging and guard edges for memory safety",
+          "Stream Core Data SQL logs and timing directly to Console",
+        ],
+      },
+      {
+        title: "Dev presets for instant context switching",
+        subtitle: "Restore your entire workspace in one click",
+        body: "Rebuild your exact development state in seconds instead of configuring simulators by hand every morning. Dev presets bundle device configurations, active profiles, and testing tools into reusable snapshots.",
+        bullets: [
+          "Save complete simulator configurations as reusable presets",
+          "Restore booted devices, target applications, and environment state",
+          "Switch between bug reproduction setups and clean testing baselines",
+          "Eliminate manual setup steps before starting a development session",
+        ],
+      },
+      {
+        title: "Always within reach in the menu bar",
+        subtitle: "Global shortcuts and fast actions from any app",
+        body: "Access essential simulator controls without leaving your editor or debugger. The lightweight menu bar companion lets you trigger captures, boot your last simulator, and resend notifications from anywhere in macOS.",
+        bullets: [
+          "Capture screenshots from any app with global shortcut ⌃⌥⌘S",
+          "Keep your last five captures accessible in one click",
+          "Boot your most recently used simulator instantly",
+          "Re-send recent push payloads directly from the menu bar",
+        ],
+      },
+      {
+        title: "Complete device management",
+        subtitle: "Boot, shutdown, and erase without simctl syntax",
+        body: "Monitor and control every simulator runtime installed on your Mac. View paired hardware devices alongside virtual simulators, check battery and connection status, and perform device lifecycles cleanly.",
+        bullets: [
+          "View paired physical devices and virtual simulator runtimes",
+          "Boot, shut down, and manage multiple simulators side by side",
+          "Single-click device wipe and factory reset",
+          "Inspect device model, iOS version, and connection state",
+        ],
+      },
+      {
+        title: "Disk Doctor storage cleanup",
+        subtitle: "Reclaim gigabytes of wasted simulator caches",
+        body: "Xcode simulators leave behind tens of gigabytes of orphaned runtimes, cache files, and abandoned app data. Disk Doctor scans simulator directories and safely reclaims disk space with a single click.",
+        bullets: [
+          "Scan simulator caches, derived data, and orphaned runtimes",
+          "Visualize storage consumption broken down by simulator",
+          "Safely delete unused simulator data without breaking Xcode",
+          "Reclaim tens of gigabytes of disk space in seconds",
+        ],
       },
     ],
     launched: false,
-    related: ["app-environment", "network-proxy"],
+    related: ["app-environment", "agentic-development"],
   },
   {
     slug: "app-environment",
