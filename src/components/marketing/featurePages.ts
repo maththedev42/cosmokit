@@ -206,20 +206,103 @@ export const FEATURE_PAGES: FeaturePageDef[] = [
   {
     slug: "app-environment",
     title: "Set the app's world before it launches",
-    subtitle: "Override appearance, status bar, permissions, Face ID, and UserDefaults.",
+    subtitle:
+      "Configure appearance, status bar, permissions, biometric auth, keychain, and UserDefaults before running your tests.",
     metaTitle: "App Environment | CosmoKit for iOS Simulator",
     metaDescription:
-      "Configure simulator appearance, status bar, Face ID, and permissions before launch.",
-    cardBlurb: "Override appearance, status bar, Face ID, and permissions before launch.",
+      "Configure simulator appearance, clean status bar, Face ID, permissions, keychain, and live UserDefaults from a native UI or the cosmokit CLI.",
+    cardBlurb:
+      "Override appearance, status bar, Face ID, permissions, and live UserDefaults before launch.",
     blocks: [
       {
-        title: "Coming soon",
-        body: "Full feature details are coming soon.",
-        bullets: [],
+        title: "Appearance, dynamic type, and accessibility",
+        subtitle: "Instant light/dark and accessibility overrides",
+        body: "Test dark mode, dynamic type sizing, and accessibility options without digging through the iOS Settings app. CosmoKit applies appearance changes immediately so you can verify color contrast and layout scalability side by side.",
+        bullets: [
+          "Toggle between Light and Dark mode instantly",
+          "Adjust Dynamic Type content size categories on the fly",
+          "Preview high contrast and accessibility display options",
+          "Verify adaptive layouts and color schemes across screens",
+        ],
+      },
+      {
+        title: "Pixel-perfect status bar overrides",
+        subtitle: "Clean frames for marketing and App Store captures",
+        body: "Set a pristine status bar before taking screenshots or recording demo videos. CosmoKit standardizes the time, battery percentage, cellular bars, and Wi-Fi signal so every capture looks polished and consistent.",
+        bullets: [
+          "Standardize clock display to 9:41 AM (or any custom time)",
+          "Pin battery status to 100% charged with full indicators",
+          "Set full Wi-Fi and cellular signal strength bars",
+          "Clear overrides with a single click to restore live system state",
+        ],
+      },
+      {
+        title: "Permissions without app reinstallation",
+        subtitle: "Grant, revoke, and reset privacy permissions",
+        body: "Modify privacy and hardware permissions on demand without uninstalling the app or resetting the simulator. Toggle access to Camera, Photos, Location, Notifications, and Contacts to test permission prompts and denied states.",
+        bullets: [
+          "Grant or revoke Camera, Microphone, and Photo Library access",
+          "Toggle Location Services, Contacts, and Push Notification access",
+          "Reset all permissions for a specific bundle ID to test onboarding",
+          "Validate fallback UI and graceful degradation when access is denied",
+        ],
+      },
+      {
+        title: "Biometric authentication & Face ID",
+        subtitle: "Simulate enrollment, matches, and failures",
+        body: "Test LocalAuthentication flows without physical hardware. CosmoKit simulates whether the device has biometrics enrolled and lets you trigger matching authentication successes or non-matching failures on demand.",
+        bullets: [
+          "Toggle Face ID and Touch ID biometric enrollment on or off",
+          "Trigger successful biometric match to test authenticated flows",
+          "Simulate biometric non-match failure to test fallback passcode UI",
+          "Test biometric lockout and retry flows seamlessly",
+        ],
+      },
+      {
+        title: "Live UserDefaults and keychain management",
+        subtitle: "Inspect, edit, and reset app state",
+        body: "Browse and edit your application's live UserDefaults plist directly. Flip feature flags, edit stored strings or arrays, delete keys, and inspect stored keychain credentials with automatic app relaunch.",
+        bullets: [
+          "Read and edit app UserDefaults keys, types, and values in real time",
+          "Delete specific preference keys or reset app domain state",
+          "Browse and manage keychain items stored by your simulator app",
+          "Install custom root certificates and reset simulator keychain",
+        ],
+        image: {
+          src: "/screenshots/store/en/defaults.webp",
+          alt: "CosmoKit UserDefaults Editor",
+        },
+      },
+      {
+        title: "Installed apps & container access",
+        subtitle: "Inspect sandboxes and launch lifecycles",
+        body: "Inspect all applications installed in the simulator with bundle IDs and version metadata. Launch, terminate, or uninstall apps with one click, or jump directly into the app's sandboxed Documents and App Group containers.",
+        bullets: [
+          "Browse installed third-party and system applications",
+          "Launch, terminate, or uninstall apps instantly",
+          "Open app sandboxes, Documents, and Caches in Finder",
+          "Inspect shared App Group container directories directly",
+        ],
+      },
+      {
+        title: "Every switch is also a command",
+        subtitle: "Drive environment states from your CLI and scripts",
+        body: "Every environment control in CosmoKit is backed by the free cosmokit CLI and exposed via MCP tools. Automate pristine status bars, permission states, and preference writes inside your CI jobs or AI agent loops.",
+        bullets: [
+          "Run cosmokit statusbar and cosmokit appearance in scripts",
+          "Control permissions with cosmokit permission grant|revoke|reset",
+          "Trigger biometrics with biometric-enroll and biometric-match",
+          "Read and write preferences with defaults and defaults-write",
+        ],
+        code: {
+          lang: "bash",
+          content:
+            "$ cosmokit statusbar --time \"9:41\" --battery 100\n$ cosmokit appearance dark\n$ cosmokit permission grant camera com.example.app\n$ cosmokit biometric-match match",
+        },
       },
     ],
     launched: false,
-    related: ["control-panel", "push-and-deep-links"],
+    related: ["control-panel", "agentic-development"],
   },
   {
     slug: "screenshots-recordings",
