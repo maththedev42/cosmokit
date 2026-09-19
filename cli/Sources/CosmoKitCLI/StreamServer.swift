@@ -574,6 +574,31 @@ public final class StreamServer {
                 Thread.sleep(forTimeInterval: 0.25)
             }
 
+        case ("GET", "/feedback/prompt"):
+            var seq: Int? = nil
+            var scope = "unacked"
+            for param in query.components(separatedBy: "&") {
+                let pair = param.components(separatedBy: "=")
+                if pair.count == 2 {
+                    if pair[0] == "seq", let val = Int(pair[1]) { seq = val }
+                    if pair[0] == "scope" { scope = pair[1] }
+                }
+            }
+            let records = FeedbackStore.readAll(udid: udid)
+            let selectedRecords: [FeedbackRecordPayload]
+            if let seq = seq {
+                guard let target = records.first(where: { $0.seq == seq }) else {
+                    return (404, ["Content-Type": "text/plain; charset=utf-8"], Data("no feedback record with seq #\(seq)\n".utf8))
+                }
+                selectedRecords = [target]
+            } else if scope == "all" {
+                selectedRecords = records
+            } else {
+                selectedRecords = records.filter { ($0.acked ?? false) == false }
+            }
+            let text = FeedbackPrompt.render(selectedRecords, app: app)
+            return (200, ["Content-Type": "text/plain; charset=utf-8"], Data(text.utf8))
+
         default:
             // Check for /feedback/<seq>/ack
             if method == "POST" && pathOnly.hasPrefix("/feedback/") && pathOnly.hasSuffix("/ack") {
@@ -896,6 +921,19 @@ public final class StreamServer {
     border: 1px solid var(--border);
   }
   .comment-ack.acked { color: var(--green); border-color: var(--green); }
+  .copy-btn {
+    background: #21262d;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 2px 8px;
+    color: var(--text);
+    font-size: 11px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.15s ease, color 0.15s ease;
+  }
+  .copy-btn:hover { background: #30363d; }
+  .copy-btn.copied { color: var(--green); border-color: var(--green); }
   pre#treeOutput {
     font-family: ui-monospace, SFMono-Regular, monospace;
     font-size: 11px;
@@ -970,7 +1008,10 @@ public final class StreamServer {
           <button class="submit-btn" id="sendBtn" onclick="submitFeedback()">Send to agent</button>
         </div>
 
-        <div style="font-weight:600; font-size:12px; margin-top:8px;">Recent Comments</div>
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-top:8px;">
+          <span style="font-weight:600; font-size:12px;">Recent Comments</span>
+          <button class="copy-btn" id="copyAllUnackedBtn" onclick="copyPrompt('unacked', this)">Copy all unacked</button>
+        </div>
         <div class="comment-list" id="commentList"></div>
       </div>
 
@@ -1237,9 +1278,12 @@ public final class StreamServer {
       card.innerHTML = `
         <div class="comment-header">
           <span>#${rec.seq} • ${elemDesc}</span>
-          <span class="${rec.acked ? 'comment-ack acked' : 'comment-ack'}" id="ack-${rec.seq}" onclick="toggleAck(${rec.seq})">
-            ${rec.acked ? '✓ Answered' : 'Pending'}
-          </span>
+          <div style="display:flex; gap:6px; align-items:center;">
+            <button class="copy-btn" onclick="copyPrompt(${rec.seq}, this)">Copy prompt</button>
+            <span class="${rec.acked ? 'comment-ack acked' : 'comment-ack'}" id="ack-${rec.seq}" onclick="toggleAck(${rec.seq})">
+              ${rec.acked ? '✓ Answered' : 'Pending'}
+            </span>
+          </div>
         </div>
         <div style="font-weight:500;">${rec.text}</div>
       `;
@@ -1293,7 +1337,43 @@ public final class StreamServer {
         } else {
           document.getElementById("feedbackTab").style.display = "flex";
           document.getElementById("controlBox").style.display = "none";
-        }
+      }
+    }
+
+    async function copyToClipboard(text) {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        return await navigator.clipboard.writeText(text);
+      }
+      const ta = document.createElement("textarea");
+      ta.value = text;
+      ta.style.position = "fixed";
+      ta.style.left = "-9999px";
+      ta.style.top = "-9999px";
+      document.body.appendChild(ta);
+      ta.focus();
+      ta.select();
+      document.execCommand("copy");
+      document.body.removeChild(ta);
+    }
+
+    async function copyPrompt(target, btn) {
+      const originalText = btn.textContent;
+      const url = typeof target === "number"
+        ? `/s/${token}/feedback/prompt?seq=${target}`
+        : `/s/${token}/feedback/prompt?scope=${target}`;
+      try {
+        const res = await fetch(url);
+        if (!res.ok) throw new Error("Failed to fetch prompt");
+        const text = await res.text();
+        await copyToClipboard(text);
+        btn.textContent = "Copied!";
+        btn.classList.add("copied");
+        setTimeout(() => {
+          btn.textContent = originalText;
+          btn.classList.remove("copied");
+        }, 1500);
+      } catch (err) {
+        showStatus("Copy failed: " + err, true);
       }
     }
 

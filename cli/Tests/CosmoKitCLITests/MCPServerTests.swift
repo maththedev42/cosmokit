@@ -495,7 +495,7 @@ final class MCPServerTests: XCTestCase {
     }
 
     func testToolsListStaysWithinItsContextBudget() throws {
-        // The current response measured 18,038 bytes; 18,330 is the headroom budget cap.
+        // The current response measured 18,097 bytes; 18,330 is the headroom budget cap.
         let response = try XCTUnwrap(MCPServer.handle(line: #"{"jsonrpc":"2.0","id":1,"method":"tools/list"}"#))
         let data = Data(response.utf8)
         let object = try jsonObject(response)

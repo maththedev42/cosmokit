@@ -363,6 +363,173 @@ final class StreamFeedbackTests: XCTestCase {
         )
         XCTAssertEqual(resInvalid.statusCode, 400)
     }
+
+    func testFeedbackPromptFormatterSnapshotAllOptionalsNil() throws {
+        let element = FeedbackElementPayload(
+            ref: 1,
+            type: "View",
+            label: nil,
+            identifier: nil,
+            frame: nil
+        )
+        let record = FeedbackRecordPayload(
+            seq: 1,
+            at: "2026-09-08T15:00:00Z",
+            x: 100,
+            y: 200,
+            element: element,
+            text: "Need fix",
+            frame: "/tmp/feedback/1.png",
+            branch: nil,
+            worktree: nil,
+            app: nil,
+            udid: "12345678-ABCD-EF01-2345-6789ABCDEF01",
+            acked: false
+        )
+        let output = FeedbackPrompt.render([record], app: nil)
+        let expected = """
+        ## Feedback #1 — app on 12345678
+        Element: View "" (id: —, ref 1, frame —)
+        Point: (100,200) pt
+        Note: Need fix
+        Screenshot: /tmp/feedback/1.png
+        Branch: —  Worktree: —
+
+        To act on this: `cosmokit ui tree --mode act` then `cosmokit ui tap <ref> --screen <hash>`.
+        Mark done with `cosmokit feedback ack <seq>`.
+        """
+        XCTAssertEqual(output, expected)
+    }
+
+    func testFeedbackPromptFormatterSnapshotAllOptionalsSet() throws {
+        let element = FeedbackElementPayload(
+            ref: 7,
+            type: "Button",
+            label: "Continue with `Pro`",
+            identifier: "cta.continue",
+            frame: UITreeFrame(x: 187, y: 612, width: 280, height: 44)
+        )
+        let record = FeedbackRecordPayload(
+            seq: 3,
+            at: "2026-09-08T15:00:00Z",
+            x: 187.4,
+            y: 612.6,
+            element: element,
+            text: "This button should say `Upgrade` instead of `Continue`",
+            frame: "/Users/developer/Library/Application Support/cosmokit/feedback/SIM-UDID-12345/3.png",
+            branch: "feat/pro-upsell",
+            worktree: "/Users/developer/Projects/CosmoKit",
+            app: "com.example.cosmokit",
+            udid: "B5029438-33A9-47E0-ACA4-C7B790A12E64",
+            acked: false
+        )
+        let output = FeedbackPrompt.render([record], app: "com.fallback.app")
+        let expected = """
+        ## Feedback #3 — com.example.cosmokit on B5029438
+        Element: Button "Continue with \\`Pro\\`" (id: cta.continue, ref 7, frame 187,612 280×44)
+        Point: (187,613) pt
+        Note: This button should say \\`Upgrade\\` instead of \\`Continue\\`
+        Screenshot: /Users/developer/Library/Application Support/cosmokit/feedback/SIM-UDID-12345/3.png
+        Branch: feat/pro-upsell  Worktree: /Users/developer/Projects/CosmoKit
+
+        To act on this: `cosmokit ui tree --mode act` then `cosmokit ui tap <ref> --screen <hash>`.
+        Mark done with `cosmokit feedback ack <seq>`.
+        """
+        XCTAssertEqual(output, expected)
+    }
+
+    func testFeedbackPromptEmptySelectionReturnsNoFeedback() throws {
+        let output = FeedbackPrompt.render([], app: nil)
+        XCTAssertEqual(output, "No feedback to render.")
+    }
+
+    func testFeedbackPromptMissingSeqErrorsWithUsageCode() throws {
+        let tempDir = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        FeedbackStore.baseDirectoryOverride = tempDir
+        defer { try? FileManager.default.removeItem(at: tempDir) }
+
+        let device = Device(udid: "UDID-MISSING-TEST", name: "iPhone 16", state: "Booted", isAvailable: true)
+        CLI.resolveDeviceForTesting = { _ in device }
+
+        XCTAssertThrowsError(try CLI.perform(command: "feedback", args: ["prompt", "--seq", "999"])) { error in
+            guard let cliError = error as? CLIError else {
+                XCTFail("Expected CLIError, got \(error)")
+                return
+            }
+            XCTAssertEqual(cliError.commandError.code, .usage)
+            XCTAssertEqual(cliError.commandError.message, "no feedback record with seq #999")
+        }
+    }
+
+    func testFeedbackPromptCLIvsHTTPByteIdentity() throws {
+        let tempDir = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        FeedbackStore.baseDirectoryOverride = tempDir
+        defer { try? FileManager.default.removeItem(at: tempDir) }
+
+        let udid = "SIM-BYTE-IDENTITY"
+        let device = Device(udid: udid, name: "iPhone 16 Pro", state: "Booted", isAvailable: true)
+        CLI.resolveDeviceForTesting = { _ in device }
+
+        let element = FeedbackElementPayload(
+            ref: 4,
+            type: "Button",
+            label: "Submit",
+            identifier: "form.submit",
+            frame: UITreeFrame(x: 20, y: 100, width: 200, height: 50)
+        )
+        _ = try FeedbackStore.append(
+            udid: udid,
+            x: 50,
+            y: 120,
+            element: element,
+            text: "Fix submit validation",
+            framePath: "/tmp/1.png",
+            branch: "main",
+            worktree: "/Users/dev/repo",
+            app: "com.example.app"
+        )
+
+        let cliOutcome = try CLI.perform(command: "feedback", args: ["prompt", "--unacked", udid])
+        let cliText = cliOutcome.human
+
+        let httpResponse = StreamServer.processRequest(
+            method: "GET",
+            uri: "/s/token123/feedback/prompt?scope=unacked",
+            body: nil,
+            token: "token123",
+            udid: udid,
+            deviceName: "iPhone 16 Pro",
+            app: "com.example.app"
+        )
+        XCTAssertEqual(httpResponse.statusCode, 200)
+        let httpText = String(decoding: httpResponse.body, as: UTF8.self)
+
+        XCTAssertEqual(cliText, httpText)
+        XCTAssertEqual(Data(cliText.utf8), httpResponse.body)
+    }
+
+    func testMCPInvocationForFeedbackPrompt() throws {
+        var received: (String, [String], String?)?
+        MCPServer.execute = { command, args, output in
+            received = (command, args, output)
+            return CommandOutcome(human: "rendered", json: FeedbackPromptPayload(text: "rendered"))
+        }
+
+        // Test action: prompt with seq
+        _ = MCPServer.handle(line: #"{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"feedback","arguments":{"action":"prompt","seq":3}}}"#)
+        XCTAssertEqual(received?.0, "feedback")
+        XCTAssertEqual(received?.1, ["prompt", "--seq", "3"])
+
+        // Test action: prompt with scope unacked
+        _ = MCPServer.handle(line: #"{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"feedback","arguments":{"action":"prompt","scope":"unacked"}}}"#)
+        XCTAssertEqual(received?.0, "feedback")
+        XCTAssertEqual(received?.1, ["prompt", "--unacked"])
+
+        // Test action: prompt with scope all
+        _ = MCPServer.handle(line: #"{"jsonrpc":"2.0","id":3,"method":"tools/call","params":{"name":"feedback","arguments":{"action":"prompt","scope":"all"}}}"#)
+        XCTAssertEqual(received?.0, "feedback")
+        XCTAssertEqual(received?.1, ["prompt", "--all"])
+    }
 }
 
 private final class MockDriverClient: DriverClientType {

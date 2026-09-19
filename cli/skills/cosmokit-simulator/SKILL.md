@@ -70,6 +70,8 @@ Or print the URL and ask the user to open it in their IDE browser. Then wait for
 cosmokit feedback next --wait 300
 ```
 
+When reasoning about several pins at once, prefer `cosmokit feedback prompt` (or MCP `feedback` with `action: "prompt"`) over `cosmokit feedback list` to receive structured blocks with coordinates, element identifiers, screenshots, and exact action commands.
+
 Act on each comment using its `ref` only if the screen hash is unchanged (until AGT-05 lands: re-read the tree and match by label/identifier). When done addressing the comment:
 
 ```sh

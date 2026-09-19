@@ -74,6 +74,11 @@ public struct FeedbackClearPayload: Codable, Equatable {
     public init(cleared: Bool, count: Int) { self.cleared = cleared; self.count = count }
 }
 
+public struct FeedbackPromptPayload: Codable, Equatable {
+    public let text: String
+    public init(text: String) { self.text = text }
+}
+
 public struct DriverStatusPayload: Codable {
     public let running: Bool
     public let port: Int?

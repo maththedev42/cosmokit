@@ -13,7 +13,7 @@ or `refStale`. Prefer refs over coordinates, `act` over `debug`, and `--max` for
 long screens. Use a screenshot only when visual layout matters. On `driverUnavailable`,
 start the agent; if the keyboard is not up, tap the field first. After finishing a
 change, run `cosmokit agent stream --open` (or print the URL for the IDE browser),
-then `cosmokit feedback next --wait 300`; act on each comment using its ref
+then `cosmokit feedback next --wait 300` (prefer `feedback prompt` over `feedback list` when reasoning about multiple pins); act on each comment using its ref
 (re-reading the tree to match by label/identifier if changed, as the human may also drive the app from the browser) and `feedback ack <seq>`
 when done, repeating until the user says stop. Never poll screenshots while waiting.
 Stop with `cosmokit agent stop`.

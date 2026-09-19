@@ -252,11 +252,23 @@ public enum MCPServer {
             return ("agent", args, nil)
         case "feedback":
             let action = try optionalString(arguments, key: "action") ?? "next"
-            guard ["next", "list", "ack", "clear"].contains(action) else { throw usageError("action must be one of: next, list, ack, clear") }
+            guard ["next", "list", "ack", "clear", "prompt"].contains(action) else { throw usageError("action must be one of: next, list, ack, clear, prompt") }
             var args = [action]
             if action == "ack" {
                 let seq = try requiredInt(arguments, key: "seq")
                 args.append(String(seq))
+            } else if action == "prompt" {
+                if let seq = arguments["seq"] {
+                    args += ["--seq", try integerString(seq, key: "seq", battery: false)]
+                } else if let scope = try optionalString(arguments, key: "scope") {
+                    if scope == "all" {
+                        args.append("--all")
+                    } else if scope == "unacked" {
+                        args.append("--unacked")
+                    } else {
+                        throw usageError("scope must be one of: unacked, all")
+                    }
+                }
             }
             if action == "next", let wait = arguments["wait"] {
                 args += ["--wait", try scalarString(wait, key: "wait")]
@@ -551,7 +563,7 @@ public enum MCPServer {
             tool("ui_wait", "Wait for an element matching text to appear, or to disappear with gone.", properties: ["text": ["type": "string"], "timeout": ["type": "number"], "gone": ["type": "boolean"], "interval": ["type": "number"]], required: ["text"]),
             tool("ui_do", "Run an ordered sequence of UI steps, stopping at the first failure.", properties: ["steps": ["type": "array", "items": ["type": "string"]], "screen": ["type": "string"]], required: ["steps"]),
             tool("agent_stream", "Start, stop, or inspect the browser stream for interactive feedback.", properties: ["action": ["type": "string", "enum": ["start", "stop", "status"]], "device": device, "port": ["type": "integer"], "open": ["type": "boolean"]], required: []),
-            tool("feedback", "Read human feedback from stream (next/list), acknowledge (ack), or clear.", properties: ["action": ["type": "string", "enum": ["next", "list", "ack", "clear"]], "wait": ["type": "number"], "seq": ["type": "integer"], "device": device], required: []),
+            tool("feedback", "Read human feedback from stream (next/list), acknowledge (ack), or clear.", properties: ["action": ["type": "string", "enum": ["next", "list", "ack", "clear", "prompt"]], "scope": ["type": "string", "enum": ["unacked", "all"]], "wait": ["type": "number"], "seq": ["type": "integer"], "device": device], required: []),
             tool("doctor", "Check Xcode, simctl, a booted simulator, driver cache/reachability, and proxy status without changing anything.", properties: [:], required: [])
         ]
     }

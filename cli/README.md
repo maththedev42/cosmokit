@@ -86,6 +86,7 @@ cosmokit agent status [name|udid]    Check driver reachability
 cosmokit agent stream [name|udid] [--port 8878] [--open] [--fps 4] [--scale 0.5] Stream simulator to browser for feedback
 cosmokit agent stream stop [name|udid] Stop the browser stream
 cosmokit feedback next [--wait 300] [--json] Wait for the next human comment
+cosmokit feedback prompt [--seq N | --all | --unacked] [device] Format feedback as a structured prompt block
 cosmokit feedback list [--json]      List all feedback comments
 cosmokit feedback ack <seq>          Mark feedback comment answered
 cosmokit feedback clear              Clear all feedback comments
@@ -302,7 +303,7 @@ cosmokit agent stream --open
 
 ![CosmoKit Stream](examples/stream-page.png)
 
-Click anywhere on the live simulator frame to place a crosshair, view the resolved UI element (type, label, identifier, and frame), write a comment, and send it to the agent. The agent reads comments with `cosmokit feedback next` and acknowledges them with `cosmokit feedback ack <seq>`.
+Click anywhere on the live simulator frame to place a crosshair, view the resolved UI element (type, label, identifier, and frame), write a comment, and send it to the agent. The agent reads comments with `cosmokit feedback next` and acknowledges them with `cosmokit feedback ack <seq>`. When reasoning about several pins at once, the agent should prefer `cosmokit feedback prompt` (or MCP `feedback` with `action: "prompt"`) over `cosmokit feedback list` to get structured, paste-ready context with coordinates, element identifiers, screenshots, and action instructions. On the stream page, each feedback row has a "Copy prompt" button and the header provides "Copy all unacked" to copy to the clipboard.
 
 ### Control Mode & Interaction
 

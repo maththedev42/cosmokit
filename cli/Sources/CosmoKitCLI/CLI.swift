@@ -97,7 +97,7 @@ public enum CLI {
           proxy-status                Read the system proxy inherited by simulators
           agent start|stop|status     Start, stop, or inspect the UI driver
           agent stream [options]      Stream simulator to browser for feedback
-          feedback next|list|ack|clear Read and manage human stream comments
+          feedback next|list|ack|clear|prompt Read and manage human stream comments
           ui tree|tap|press|swipe     Inspect and drive the app UI
           ui type|button|alert        Type text or press UI/hardware controls
           ui wait|do                  Wait for elements or run action sequences
@@ -951,8 +951,50 @@ public enum CLI {
             let human = "Cleared \(count) feedback record(s) on \(device.name)"
             return CommandOutcome(human: human, json: FeedbackClearPayload(cleared: true, count: count))
 
+        case "prompt":
+            var seq: Int? = nil
+            var scope = "unacked"
+            var deviceQuery: String? = nil
+            var index = 1
+            while index < args.count {
+                switch args[index] {
+                case "--seq":
+                    guard index + 1 < args.count, let val = Int(args[index + 1]) else {
+                        throw usage("usage: cosmokit feedback prompt [--seq N | --all | --unacked] [name|udid]")
+                    }
+                    seq = val
+                    index += 2
+                case "--all":
+                    scope = "all"
+                    index += 1
+                case "--unacked":
+                    scope = "unacked"
+                    index += 1
+                default:
+                    if !args[index].hasPrefix("--") && deviceQuery == nil {
+                        deviceQuery = args[index]
+                    }
+                    index += 1
+                }
+            }
+            let device = try resolveDevice(deviceQuery)
+            let records = FeedbackStore.readAll(udid: device.udid)
+            let selectedRecords: [FeedbackRecordPayload]
+            if let seq = seq {
+                guard let target = records.first(where: { $0.seq == seq }) else {
+                    throw CLIError(commandError: CommandError(code: .usage, message: "no feedback record with seq #\(seq)"))
+                }
+                selectedRecords = [target]
+            } else if scope == "all" {
+                selectedRecords = records
+            } else {
+                selectedRecords = records.filter { ($0.acked ?? false) == false }
+            }
+            let rendered = FeedbackPrompt.render(selectedRecords, app: nil)
+            return CommandOutcome(human: rendered, json: FeedbackPromptPayload(text: rendered))
+
         default:
-            throw usage("unknown feedback action: \(action)")
+            throw usage("usage: cosmokit feedback next|list|ack|clear|prompt [name|udid] [options]")
         }
     }
 
