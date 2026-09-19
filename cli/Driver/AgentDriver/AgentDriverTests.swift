@@ -26,7 +26,8 @@ final class AgentDriverTests: XCTestCase {
             let lines = request.components(separatedBy: "\r\n")
             let first = lines.first?.split(separator: " ") ?? []
             let method = first.first.map(String.init) ?? "GET"
-            let path = first.dropFirst().first.map(String.init) ?? "/"
+            let rawPath = first.dropFirst().first.map(String.init) ?? "/"
+            let path = rawPath.components(separatedBy: "?").first ?? rawPath
             let response = self.handle(method: method, path: path)
             let bytes = Data(response.utf8)
             let header = Data("HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nContent-Length: \(bytes.count)\r\nConnection: close\r\n\r\n".utf8)

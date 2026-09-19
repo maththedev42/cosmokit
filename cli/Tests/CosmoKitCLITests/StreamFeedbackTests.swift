@@ -4,6 +4,7 @@ import XCTest
 final class StreamFeedbackTests: XCTestCase {
     override func tearDown() {
         FeedbackStore.baseDirectoryOverride = nil
+        StreamServer.driverClient = DefaultDriverClient()
         super.tearDown()
     }
 
@@ -184,5 +185,205 @@ final class StreamFeedbackTests: XCTestCase {
         let inv4 = try MCPServer.commandInvocation(tool: "feedback", arguments: ["action": "ack", "seq": 5])
         XCTAssertEqual(inv4.command, "feedback")
         XCTAssertEqual(inv4.args, ["ack", "5"])
+    }
+
+    func testActEndpointRejectsMissingOrWrongTokenWith404() throws {
+        let validToken = "token1234567"
+        let payload = #"{"action": "tap", "x": 100, "y": 200}"#.data(using: .utf8)
+
+        // Missing token
+        let res1 = StreamServer.processRequest(
+            method: "POST",
+            uri: "/act",
+            body: payload,
+            token: validToken,
+            udid: "TEST-UDID"
+        )
+        XCTAssertEqual(res1.statusCode, 404)
+
+        // Wrong token
+        let res2 = StreamServer.processRequest(
+            method: "POST",
+            uri: "/s/wrongtoken/act",
+            body: payload,
+            token: validToken,
+            udid: "TEST-UDID"
+        )
+        XCTAssertEqual(res2.statusCode, 404)
+    }
+
+    func testActEndpointReturnsDriverUnavailableWhenDriverNotRunning() throws {
+        let validToken = "token1234567"
+        let mock = MockDriverClient(isRunning: false)
+        StreamServer.driverClient = mock
+
+        let payload = #"{"action": "tap", "x": 100, "y": 200}"#.data(using: .utf8)
+        let res = StreamServer.processRequest(
+            method: "POST",
+            uri: "/s/\(validToken)/act",
+            body: payload,
+            token: validToken,
+            udid: "TEST-UDID"
+        )
+        XCTAssertEqual(res.statusCode, 200)
+
+        guard let json = try? JSONSerialization.jsonObject(with: res.body) as? [String: Any],
+              let ok = json["ok"] as? Bool,
+              let error = json["error"] as? [String: Any],
+              let code = error["code"] as? String else {
+            XCTFail("Expected driverUnavailable error envelope")
+            return
+        }
+        XCTAssertFalse(ok)
+        XCTAssertEqual(code, "driverUnavailable")
+    }
+
+    func testActEndpointRejectsUnknownActionWith400() throws {
+        let validToken = "token1234567"
+        let mock = MockDriverClient(isRunning: true)
+        StreamServer.driverClient = mock
+
+        let payload = #"{"action": "dance"}"#.data(using: .utf8)
+        let res = StreamServer.processRequest(
+            method: "POST",
+            uri: "/s/\(validToken)/act",
+            body: payload,
+            token: validToken,
+            udid: "TEST-UDID"
+        )
+        XCTAssertEqual(res.statusCode, 400)
+
+        guard let json = try? JSONSerialization.jsonObject(with: res.body) as? [String: Any],
+              let ok = json["ok"] as? Bool,
+              let error = json["error"] as? [String: Any],
+              let code = error["code"] as? String else {
+            XCTFail("Expected badAction error envelope")
+            return
+        }
+        XCTAssertFalse(ok)
+        XCTAssertEqual(code, "badAction")
+    }
+
+    func testActEndpointConvertsPagePxToPointsWithScale() throws {
+        let validToken = "token1234567"
+        let mock = MockDriverClient(isRunning: true)
+        StreamServer.driverClient = mock
+
+        var postActCalled = false
+
+        // Tap test: 100, 200 px at scale 0.5 -> 200, 400 pt
+        let tapPayload = #"{"action": "tap", "x": 100, "y": 200}"#.data(using: .utf8)
+        let tapRes = StreamServer.processRequest(
+            method: "POST",
+            uri: "/s/\(validToken)/act",
+            body: tapPayload,
+            token: validToken,
+            udid: "TEST-UDID",
+            scale: 0.5,
+            onPostAct: { postActCalled = true }
+        )
+        XCTAssertEqual(tapRes.statusCode, 200)
+        XCTAssertTrue(postActCalled)
+        XCTAssertEqual(mock.recordedCalls.count, 1)
+        XCTAssertEqual(mock.recordedCalls[0].path, "/tap")
+        XCTAssertEqual(mock.recordedCalls[0].json?["x"] as? Double, 200.0)
+        XCTAssertEqual(mock.recordedCalls[0].json?["y"] as? Double, 400.0)
+
+        postActCalled = false
+        // Swipe test: 10, 20 to 50, 60 px at scale 0.5 -> 20, 40 to 100, 120 pt
+        let swipePayload = #"{"action": "swipe", "x1": 10, "y1": 20, "x2": 50, "y2": 60, "duration": 0.5}"#.data(using: .utf8)
+        let swipeRes = StreamServer.processRequest(
+            method: "POST",
+            uri: "/s/\(validToken)/act",
+            body: swipePayload,
+            token: validToken,
+            udid: "TEST-UDID",
+            scale: 0.5,
+            onPostAct: { postActCalled = true }
+        )
+        XCTAssertEqual(swipeRes.statusCode, 200)
+        XCTAssertTrue(postActCalled)
+        XCTAssertEqual(mock.recordedCalls.count, 2)
+        XCTAssertEqual(mock.recordedCalls[1].path, "/swipe")
+        XCTAssertEqual(mock.recordedCalls[1].json?["x1"] as? Double, 20.0)
+        XCTAssertEqual(mock.recordedCalls[1].json?["y1"] as? Double, 40.0)
+        XCTAssertEqual(mock.recordedCalls[1].json?["x2"] as? Double, 100.0)
+        XCTAssertEqual(mock.recordedCalls[1].json?["y2"] as? Double, 120.0)
+        XCTAssertEqual(mock.recordedCalls[1].json?["duration"] as? Double, 0.5)
+    }
+
+    func testActEndpointCapsTextAt2000Chars() throws {
+        let validToken = "token1234567"
+        let mock = MockDriverClient(isRunning: true)
+        StreamServer.driverClient = mock
+
+        let longText = String(repeating: "A", count: 2500)
+        let payload = try JSONSerialization.data(withJSONObject: ["action": "type", "text": longText])
+        let res = StreamServer.processRequest(
+            method: "POST",
+            uri: "/s/\(validToken)/act",
+            body: payload,
+            token: validToken,
+            udid: "TEST-UDID"
+        )
+        XCTAssertEqual(res.statusCode, 200)
+        XCTAssertEqual(mock.recordedCalls.count, 1)
+        XCTAssertEqual(mock.recordedCalls[0].path, "/type")
+        let sentText = mock.recordedCalls[0].json?["text"] as? String
+        XCTAssertEqual(sentText?.count, 2000)
+    }
+
+    func testActEndpointHardwareButtons() throws {
+        let validToken = "token1234567"
+        let mock = MockDriverClient(isRunning: true)
+        StreamServer.driverClient = mock
+
+        // Valid button
+        let payloadHome = #"{"action": "button", "name": "home"}"#.data(using: .utf8)
+        let resHome = StreamServer.processRequest(
+            method: "POST",
+            uri: "/s/\(validToken)/act",
+            body: payloadHome,
+            token: validToken,
+            udid: "TEST-UDID"
+        )
+        XCTAssertEqual(resHome.statusCode, 200)
+        XCTAssertEqual(mock.recordedCalls.count, 1)
+        XCTAssertEqual(mock.recordedCalls[0].path, "/button")
+        XCTAssertEqual(mock.recordedCalls[0].json?["name"] as? String, "home")
+
+        // Invalid button -> 400
+        let payloadInvalid = #"{"action": "button", "name": "powerOff"}"#.data(using: .utf8)
+        let resInvalid = StreamServer.processRequest(
+            method: "POST",
+            uri: "/s/\(validToken)/act",
+            body: payloadInvalid,
+            token: validToken,
+            udid: "TEST-UDID"
+        )
+        XCTAssertEqual(resInvalid.statusCode, 400)
+    }
+}
+
+private final class MockDriverClient: DriverClientType {
+    var isRunning: Bool
+    struct CallRecord {
+        let path: String
+        let method: String
+        let json: [String: Any]?
+    }
+    var recordedCalls: [CallRecord] = []
+
+    init(isRunning: Bool) {
+        self.isRunning = isRunning
+    }
+
+    func status(device: String?) -> DriverStatusPayload {
+        DriverStatusPayload(running: isRunning, port: isRunning ? 8877 : nil, pid: isRunning ? 1234 : nil)
+    }
+
+    func call(_ path: String, method: String, json: [String: Any]?) throws -> Data {
+        recordedCalls.append(CallRecord(path: path, method: method, json: json))
+        return Data("{\"ok\":true}".utf8)
     }
 }

@@ -10,6 +10,7 @@
 
 import Foundation
 import SystemConfiguration
+import Darwin
 
 /// What a command produced. `human` is the exact line the CLI has always
 /// printed; `json` is the same result as an encodable payload.
@@ -530,8 +531,8 @@ public enum CLI {
         case "tree":
             var mode = UITreeMode.act; var depth: String?; var max = 80; var app: String?; var index = 1
             while index < args.count { switch args[index] { case "--mode": guard index + 1 < args.count, let value = UITreeMode(rawValue: args[index + 1]) else { throw usage("mode must be nav, act, or debug") }; mode = value; index += 2; case "--depth": guard index + 1 < args.count else { throw usage("--depth requires a value") }; depth = args[index + 1]; index += 2; case "--max": guard index + 1 < args.count, let value = Int(args[index + 1]), value > 0 else { throw usage("--max requires a positive integer") }; max = value; index += 2; case "--app": guard index + 1 < args.count else { throw usage("--app requires a bundle id") }; app = args[index + 1]; index += 2; default: index += 1 } }
-            var query: [String: Any] = [:]; if let depth { query["depth"] = Int(depth) ?? depth }; query["max_elements"] = max; if let app { query["app"] = app }
-            let data = try Driver.call("/tree", method: "GET", json: query)
+            var query: [String: Any] = [:]; if let depth { query["depth"] = Int(depth) ?? depth }; if let app { query["app"] = app }
+            let data = try Driver.call("/tree", method: "GET", json: query.isEmpty ? nil : query)
             var snapshot = try UITree.parse(data)
             let hash = UITree.screenHash(snapshot)
             snapshot.screen = hash
@@ -732,6 +733,66 @@ public enum CLI {
 
     public static var startStreamForTesting: ((Device, Int, Double, Double, String) throws -> StreamStatusPayload)? = nil
 
+    private static func spawnDaemon(device: Device, args: [String]) throws -> CommandOutcome {
+        let executablePath: String = {
+            if let path = Bundle.main.executablePath, FileManager.default.isExecutableFile(atPath: path) {
+                return path
+            }
+            if let argv0 = CommandLine.arguments.first, FileManager.default.isExecutableFile(atPath: argv0) {
+                return argv0
+            }
+            return "/usr/local/bin/cosmokit"
+        }()
+
+        let logDir = URL(fileURLWithPath: NSHomeDirectory())
+            .appendingPathComponent("Library/Application Support/cosmokit")
+        try? FileManager.default.createDirectory(at: logDir, withIntermediateDirectories: true)
+        let logPath = logDir.appendingPathComponent("stream-\(device.udid).log").path
+
+        var fileActions: posix_spawn_file_actions_t?
+        posix_spawn_file_actions_init(&fileActions)
+        defer { posix_spawn_file_actions_destroy(&fileActions) }
+
+        // fd 0 -> /dev/null
+        posix_spawn_file_actions_addopen(&fileActions, 0, "/dev/null", O_RDONLY, 0)
+        // fd 1 & 2 -> logPath
+        posix_spawn_file_actions_addopen(&fileActions, 1, logPath, O_WRONLY | O_CREAT | O_APPEND, 0o644)
+        posix_spawn_file_actions_addopen(&fileActions, 2, logPath, O_WRONLY | O_CREAT | O_APPEND, 0o644)
+
+        var attr: posix_spawnattr_t?
+        posix_spawnattr_init(&attr)
+        defer { posix_spawnattr_destroy(&attr) }
+
+        // setsid to detach from controlling terminal
+        posix_spawnattr_setflags(&attr, Int16(POSIX_SPAWN_SETSID))
+
+        // Child command: cosmokit agent stream <args minus --daemon> --foreground
+        let childArgs = ["cosmokit", "agent", "stream"] + args.filter { $0 != "--daemon" } + ["--foreground"]
+        var cArgs = childArgs.map { strdup($0) }
+        cArgs.append(nil)
+        defer { for ptr in cArgs where ptr != nil { free(ptr) } }
+
+        var pid: pid_t = 0
+        let spawnErr = posix_spawn(&pid, executablePath, &fileActions, &attr, cArgs, environ)
+        guard spawnErr == 0 else {
+            throw CLIError(commandError: CommandError(code: .driverUnavailable, message: "Failed to spawn daemon process (posix_spawn returned \(spawnErr))"))
+        }
+
+        // Parent waits up to 5s for pid file to appear
+        let deadline = Date().addingTimeInterval(5.0)
+        var status = StreamServer.status(device: device.udid)
+        while !status.running && Date() < deadline {
+            Thread.sleep(forTimeInterval: 0.1)
+            status = StreamServer.status(device: device.udid)
+        }
+
+        guard status.running, let url = status.url else {
+            throw CLIError(commandError: CommandError(code: .driverUnavailable, message: "Stream daemon spawned (pid \(pid)), but failed to start within 5s. Check log at: \(logPath)"))
+        }
+
+        return CommandOutcome(human: url, json: status)
+    }
+
     private static func performAgentStream(_ args: [String]) throws -> CommandOutcome {
         if args.first == "stop" {
             let deviceQuery = args.dropFirst().first(where: { !$0.hasPrefix("--") })
@@ -749,6 +810,7 @@ public enum CLI {
         var scale = 0.5
         var openBrowser = false
         var daemon = false
+        var foreground = false
         var source = "simctl"
         var deviceQuery: String? = nil
 
@@ -770,6 +832,9 @@ public enum CLI {
             case "--daemon":
                 daemon = true
                 index += 1
+            case "--foreground":
+                foreground = true
+                index += 1
             case "--source" where index + 1 < args.count:
                 source = args[index + 1]
                 index += 2
@@ -788,6 +853,11 @@ public enum CLI {
             return CommandOutcome(human: status.url ?? "http://127.0.0.1:\(port)/", json: status)
         }
 
+        // If daemon is requested and this is not already the re-spawned foreground child, spawn daemon
+        if daemon && !foreground {
+            return try spawnDaemon(device: device, args: args)
+        }
+
         let server = StreamServer(port: port, device: device, fps: fps, scale: scale, source: source)
         try server.start(openBrowser: openBrowser)
 
@@ -797,13 +867,26 @@ public enum CLI {
             return CommandOutcome(human: server.url, json: status)
         }
 
-        print(server.url)
-        fflush(stdout)
+        if !foreground {
+            print(server.url)
+            fflush(stdout)
+        }
 
-        let sig = DispatchSource.makeSignalSource(signal: SIGINT, queue: .main)
-        sig.setEventHandler { exit(0) }
-        sig.resume()
+        let pidFile = StreamServer.pidFile(for: device.udid)
+        let cleanup = {
+            try? FileManager.default.removeItem(at: pidFile)
+            exit(0)
+        }
+
+        let sigint = DispatchSource.makeSignalSource(signal: SIGINT, queue: .main)
+        sigint.setEventHandler(handler: cleanup)
+        sigint.resume()
         signal(SIGINT, SIG_IGN)
+
+        let sigterm = DispatchSource.makeSignalSource(signal: SIGTERM, queue: .main)
+        sigterm.setEventHandler(handler: cleanup)
+        sigterm.resume()
+        signal(SIGTERM, SIG_IGN)
 
         RunLoop.current.run()
         return CommandOutcome(human: server.url, json: status)

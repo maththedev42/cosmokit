@@ -304,9 +304,57 @@ cosmokit agent stream --open
 
 Click anywhere on the live simulator frame to place a crosshair, view the resolved UI element (type, label, identifier, and frame), write a comment, and send it to the agent. The agent reads comments with `cosmokit feedback next` and acknowledges them with `cosmokit feedback ack <seq>`.
 
+### Control Mode & Interaction
+
+The stream page includes a mode toggle at the top:
+- **Feedback** (default): Place pins, inspect elements, and send feedback comments.
+- **Control**: Interact directly with the simulator from the browser:
+  - **Click**: Sends a tap to the clicked location.
+  - **Drag**: Dragging >12px draws a drag line and sends a swipe gesture (e.g. for scrolling).
+  - **Keyboard**: Typing while focused on the frame sends debounced text to the active field (Enter sends `\n`; Backspace is ignored by the driver).
+  - **Hardware Buttons**: Buttons for Home, Lock, Vol +, Vol −, and Siri.
+
+### Scripting the `/act` Endpoint
+
+Automations and custom scripts can send actions directly to the stream server:
+
+```sh
+# Tap at page coordinates (x, y)
+curl -X POST http://127.0.0.1:8878/s/<token>/act \
+  -H "Content-Type: application/json" \
+  -d '{"action": "tap", "x": 196, "y": 426}'
+
+# Swipe between two points
+curl -X POST http://127.0.0.1:8878/s/<token>/act \
+  -H "Content-Type: application/json" \
+  -d '{"action": "swipe", "x1": 200, "y1": 600, "x2": 200, "y2": 200, "duration": 0.5}'
+
+# Type text (capped at 2,000 characters)
+curl -X POST http://127.0.0.1:8878/s/<token>/act \
+  -H "Content-Type: application/json" \
+  -d '{"action": "type", "text": "Hello world"}'
+
+# Hardware button (home, lock, siri, volumeUp, volumeDown)
+curl -X POST http://127.0.0.1:8878/s/<token>/act \
+  -H "Content-Type: application/json" \
+  -d '{"action": "button", "name": "home"}'
+```
+
+Actions require the driver (`cosmokit agent start`). If the driver is stopped, `/act` returns `{"ok":false,"error":{"code":"driverUnavailable"}}`.
+
+### Background Daemon & Logs
+
+Run `cosmokit agent stream --daemon` to start the stream in the background detached from the current shell session. The parent command waits for the server to become ready and prints the URL. Background logs are appended to:
+`~/Library/Application Support/cosmokit/stream-<udid>.log`
+
+Stop the background daemon at any time with:
+```sh
+cosmokit agent stream stop
+```
+
 ### Security
 
-The stream binds to `127.0.0.1` only (never `0.0.0.0`) under a per-session random path prefix (`/s/<token>/...`), ensuring other local pages cannot post unauthorized feedback. Frames and feedback records are stored only on the local disk (`~/Library/Application Support/cosmokit/feedback/`) and never leave your Mac.
+The stream binds to `127.0.0.1` only (never `0.0.0.0`) under a per-session random path prefix (`/s/<token>/...`), ensuring other local pages cannot post unauthorized actions or feedback. Frames, logs, and feedback records are stored only on the local disk (`~/Library/Application Support/cosmokit/`) and never leave your Mac.
 
 > [!NOTE]
 > Codex CLI cannot open browser pages automatically; the command prints the stream URL on its first line so you can open it in your browser or IDE webview manually.

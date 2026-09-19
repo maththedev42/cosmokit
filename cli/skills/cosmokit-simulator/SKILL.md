@@ -76,7 +76,7 @@ Act on each comment using its `ref` only if the screen hash is unchanged (until 
 cosmokit feedback ack <seq>
 ```
 
-Repeat until the user says stop. Never poll screenshots while waiting.
+Repeat until the user says stop. The human may also be driving the app directly from the browser in Control mode, so re-read `ui tree` after waiting on feedback. Never poll screenshots while waiting.
 
 ## Finish
 
