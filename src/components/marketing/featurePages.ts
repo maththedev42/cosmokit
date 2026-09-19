@@ -307,20 +307,70 @@ export const FEATURE_PAGES: FeaturePageDef[] = [
   {
     slug: "screenshots-recordings",
     title: "Capture, record, and generate store screenshots",
-    subtitle: "Pixel-perfect simulator captures, video recording, and App Store screenshot generation.",
+    subtitle:
+      "Pixel-perfect simulator captures, MP4 and animated GIF video recording, and automated App Store screenshot generation.",
     metaTitle: "Screenshots & Recordings | CosmoKit for iOS Simulator",
     metaDescription:
-      "Capture simulator screenshots, record video, and generate App Store assets.",
-    cardBlurb: "High-resolution simulator captures, video recordings, and App Store assets.",
+      "Capture high-resolution simulator screenshots, record MP4 and GIF video, and generate framed App Store assets without design tools.",
+    cardBlurb:
+      "High-resolution simulator captures, MP4/GIF video recording, and App Store screenshot generation.",
     blocks: [
       {
-        title: "Coming soon",
-        body: "Full feature details are coming soon.",
-        bullets: [],
+        title: "One-click pixel-perfect screenshots",
+        subtitle: "Lossless captures directly from the menu bar or workspace",
+        body: "Grab clean, uncompressed simulator screenshots instantly without hunting through desktop clutter. Capture with a single click or global hotkey ⌃⌥⌘S, with optional native device bezels and direct clipboard copying.",
+        bullets: [
+          "Capture high-resolution simulator screenshots in one click",
+          "Global system shortcut ⌃⌥⌘S captures without switching windows",
+          "Optional native device frames and drop shadows",
+          "Recent captures saved to your workspace and ready to share",
+        ],
+        image: {
+          src: "/screenshots/store/en/capture.webp",
+          alt: "CosmoKit Screen Capture tool",
+        },
+      },
+      {
+        title: "Smooth video recording and animated GIFs",
+        subtitle: "Export demo recordings for QA, pull requests, and marketing",
+        body: "Record smooth simulator walkthroughs without clunky QuickTime menus or command line tools. Export directly to compressed MP4 for bug reports and PR walkthroughs, or lightweight animated GIFs for documentation.",
+        bullets: [
+          "Record smooth video sessions directly from the control panel",
+          "Export to standard MP4 video or animated GIF formats",
+          "Optional audio recording toggle for spoken walkthroughs",
+          "Ideal for QA bug reproduction, pull request previews, and docs",
+        ],
+      },
+      {
+        title: "App Store screenshot generator",
+        subtitle: "Generate store-ready assets without opening Figma",
+        body: "Transform raw simulator captures into framed, localized App Store screenshot sets ready for App Store Connect. Choose from official Apple display size presets, apply gradient backgrounds, and manage localized copy.",
+        bullets: [
+          "Presets for required iPhone, iPad, and Mac App Store display sizes",
+          "Automated device framing with accurate hardware bezels",
+          "Customizable background colors, gradients, and font typography",
+          "Multi-locale template sets for localized App Store submissions",
+        ],
+      },
+      {
+        title: "Automated captures in CI and scripts",
+        subtitle: "Drive visual regression tests from the cosmokit CLI",
+        body: "Incorporate simulator visual capture into your automated build pipelines and git hooks. The free cosmokit CLI provides scriptable capture and recording commands that output directly to target directories.",
+        bullets: [
+          "Run cosmokit capture to save screenshot artifacts in CI jobs",
+          "Record simulator sessions during integration tests with cosmokit record",
+          "Target specific booted or named simulators with UDID flags",
+          "Zero graphical dependencies required for CLI screenshot tasks",
+        ],
+        code: {
+          lang: "bash",
+          content:
+            "# Capture booted simulator into repository screenshots\n$ cosmokit capture --output ./screenshots\n\n# Record 10-second interaction video\n$ cosmokit record --output ./artifacts/test-run.mp4",
+        },
       },
     ],
     launched: false,
-    related: ["control-panel", "agentic-development"],
+    related: ["control-panel", "push-and-deep-links"],
   },
   {
     slug: "push-and-deep-links",
