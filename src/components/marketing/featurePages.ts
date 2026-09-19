@@ -443,19 +443,81 @@ export const FEATURE_PAGES: FeaturePageDef[] = [
   {
     slug: "location",
     title: "Simulate location, routes, and scenarios",
-    subtitle: "Set GPS coordinates, simulate routes, and test geofencing with ease.",
+    subtitle:
+      "Set GPS coordinates, replay movement routes with walk, bike, or drive speeds, and trigger built-in location scenarios.",
     metaTitle: "Location Simulation | CosmoKit for iOS Simulator",
-    metaDescription: "Set custom GPS coordinates and simulate routes in the iOS Simulator.",
-    cardBlurb: "Simulate GPS coordinates, movement routes, and geofencing scenarios.",
+    metaDescription:
+      "Simulate GPS coordinates, movement routes with custom speeds, and built-in location scenarios in the iOS Simulator without leaving your desk.",
+    cardBlurb:
+      "Simulate GPS coordinates, movement routes, and geofencing scenarios directly on the simulator.",
     blocks: [
       {
-        title: "Coming soon",
-        body: "Full feature details are coming soon.",
-        bullets: [],
+        title: "Set any GPS coordinate on Earth",
+        subtitle: "Address search and favorite location presets",
+        body: "Teleport any iOS Simulator to any coordinate worldwide in one click. Search addresses, drop custom latitude and longitude coordinates, and save frequently used testing locations for geofencing and localized content checks.",
+        bullets: [
+          "Set exact latitude and longitude coordinates on any booted simulator",
+          "Search places and addresses with built-in geocoding lookup",
+          "Save favorite location presets per application profile",
+          "Test region-restricted content, geofencing triggers, and maps",
+        ],
+        image: {
+          src: "/screenshots/store/en/location.webp",
+          alt: "CosmoKit Location Simulation tool",
+        },
+      },
+      {
+        title: "Replay dynamic movement routes",
+        subtitle: "Simulate realistic transit with walk, bike, and drive speeds",
+        body: "Simulate smooth movement between coordinates to test fitness tracking, turn-by-turn navigation, and background location updates. Choose between walking, cycling, or driving presets, or configure custom speeds with real-time ETA calculation.",
+        bullets: [
+          "Simulate GPS movement between start and destination waypoints",
+          "Select presets for Walk, Bicycle, or Automobile speeds",
+          "Configure custom velocity in km/h for high-speed or precision testing",
+          "Real-time distance and estimated time of arrival calculations",
+        ],
+      },
+      {
+        title: "Built-in simulator location scenarios",
+        subtitle: "Exercise Apple's standard simulation routines",
+        body: "Run standard location routes built into the iOS Simulator platform without configuring custom waypoint files. Simulate common transit patterns to verify background tracking behavior and battery optimization.",
+        bullets: [
+          "List and execute built-in simulator location scenarios",
+          "Run City Bicycle Ride, City Run, and Freeway Drive routines",
+          "Continuous route simulation until explicitly paused or cleared",
+          "Verify background location delegates and power-saving modes",
+        ],
+      },
+      {
+        title: "Clear and reset location state",
+        subtitle: "Return to neutral simulator state in one click",
+        body: "Stop active route simulations and clear fixed location overrides whenever your test run concludes. CosmoKit cleanly resets simulated location state so subsequent test runs start from a known neutral baseline.",
+        bullets: [
+          "Stop running location scenarios with a single click",
+          "Clear fixed GPS positions to restore default simulator state",
+          "Eliminate leftover mock coordinates between automated test runs",
+          "Ensure clean, reproducible test baselines for test suites",
+        ],
+      },
+      {
+        title: "Scriptable location commands for CLI & AI agents",
+        subtitle: "Automate location testing in CI pipelines and agent loops",
+        body: "Every location tool in CosmoKit is accessible via the free cosmokit CLI and stdio MCP server. AI agents and shell scripts can query scenarios, set coordinates, and run routes programmatically.",
+        bullets: [
+          "Run cosmokit location <lat> <lon> to position simulators from scripts",
+          "Query built-in scenarios with cosmokit scenarios",
+          "Start dynamic routes with cosmokit route <scenario>",
+          "Stop simulation cleanly with cosmokit location-clear",
+        ],
+        code: {
+          lang: "bash",
+          content:
+            "# Put the simulator in Rio de Janeiro before running tests\n$ cosmokit location -22.9068 -43.1729\n\n# Run built-in freeway drive scenario\n$ cosmokit route \"Freeway Drive\"\n\n# Clear location simulation\n$ cosmokit location-clear",
+        },
       },
     ],
     launched: false,
-    related: ["control-panel", "push-and-deep-links"],
+    related: ["push-and-deep-links", "agentic-development"],
   },
   {
     slug: "cli",
