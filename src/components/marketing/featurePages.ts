@@ -375,20 +375,70 @@ export const FEATURE_PAGES: FeaturePageDef[] = [
   {
     slug: "push-and-deep-links",
     title: "Push notifications and deep links in one click",
-    subtitle: "Test push notifications and open custom URLs without a backend or physical device.",
+    subtitle:
+      "Send custom APNs push payloads, test Universal Links, and open custom URL schemes directly in the iOS Simulator without a backend.",
     metaTitle: "Push Notifications & Deep Links | CosmoKit for iOS Simulator",
     metaDescription:
-      "Send custom push payloads and trigger deep links in the iOS Simulator instantly.",
-    cardBlurb: "Send push payloads and test URL schemes directly in the simulator.",
+      "Send custom APNs payloads and open deep links or Universal Links in the iOS Simulator without a backend server or physical device.",
+    cardBlurb:
+      "Send push payloads and test URL schemes directly in the simulator without a backend.",
     blocks: [
       {
-        title: "Coming soon",
-        body: "Full feature details are coming soon.",
-        bullets: [],
+        title: "Push payload editor and simulated delivery",
+        subtitle: "Test notification UI and badges without Apple Push Notification keys",
+        body: "Compose custom APNs JSON payloads and simulate delivery directly to any running simulator. Verify banner layouts, notification action buttons, badge counts, and payload data handling without provisioning certificates or setting up backend push services.",
+        bullets: [
+          "Send custom APNs JSON payloads directly to the simulator",
+          "Test notification banners, alert titles, subtitles, and bodies",
+          "Verify badge counts, custom sounds, and background notification triggers",
+          "Zero backend servers, physical devices, or APNs certificates required",
+        ],
+        image: {
+          src: "/screenshots/store/en/push.webp",
+          alt: "CosmoKit Push Notification tool",
+        },
+      },
+      {
+        title: "Saved payload templates for edge cases",
+        subtitle: "Build a library of reusable notification test scenarios",
+        body: "Store frequently used push notification structures into reusable templates. Quickly test edge cases such as long notification text, missing parameters, deep link routes, and order updates without retyping JSON.",
+        bullets: [
+          "Save reusable payload templates per application or profile",
+          "Test edge-case text lengths, missing keys, and invalid formats",
+          "Quickly re-send recent payloads from the main window or menu bar",
+          "Organize and manage team testing templates side by side",
+        ],
+      },
+      {
+        title: "Deep links and Universal Links routing",
+        subtitle: "Validate custom schemes and URL handling instantly",
+        body: "Trigger custom URL schemes (like myapp://) and HTTP/HTTPS Universal Links directly in the simulator. Test routing logic, authentication callbacks, referral codes, and deep-linked screens in seconds.",
+        bullets: [
+          "Open custom URL schemes and HTTP/HTTPS Universal Links directly",
+          "Verify routing logic, URL query parameters, and screen transitions",
+          "Store reusable deep links in your history for instant access",
+          "Validate deep-linked authentication and onboarding funnels",
+        ],
+      },
+      {
+        title: "Automate pushes and links from the CLI",
+        subtitle: "Exercise notification flows in git hooks and CI suites",
+        body: "Trigger pushes and deep links programmatically using the free cosmokit CLI. Incorporate deep link validation into pull request checks or simulate pushes inside automated end-to-end tests.",
+        bullets: [
+          "Run cosmokit push to send JSON payloads to target bundle IDs",
+          "Run cosmokit open to fire URL schemes and deep links from scripts",
+          "Exercise routing checks automatically inside git pre-commit hooks",
+          "Use push and open MCP tools from Claude Code, Cursor, and Codex",
+        ],
+        code: {
+          lang: "bash",
+          content:
+            "# Send custom push notification payload\n$ cosmokit push com.example.app ./payload.json\n\n# Open deep link route\n$ cosmokit open \"myapp://settings/notifications?source=promo\"",
+        },
       },
     ],
     launched: false,
-    related: ["app-environment", "location"],
+    related: ["location", "app-environment"],
   },
   {
     slug: "location",
