@@ -2,12 +2,12 @@ import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { AppStoreButton } from "@/components/marketing/marketing";
 
-export function ReadyCTA() {
+export function ReadyCTA({ title = "Ready to test faster?" }: { title?: string }) {
   return (
     <section className="container mx-auto px-4 pb-24 text-center">
       <div className="max-w-2xl mx-auto rounded-2xl border border-border/60 bg-card/40 p-10">
         <h2 className="text-2xl md:text-3xl font-bold mb-3">
-          Ready to test faster?
+          {title}
         </h2>
         <p className="text-muted-foreground mb-6">
           CosmoKit is a native macOS app. Free to start, no signup.

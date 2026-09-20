@@ -18,22 +18,104 @@ export type FeaturePageDef = {
   launched: boolean; // false until FH-06
   related?: string[]; // other slugs, rendered as links above the CTA
   externalHref?: string; // card links here instead of /features/<slug>/ (used for /cli/)
+  ctaTitle?: string;
 };
 
 export const FEATURE_PAGES: FeaturePageDef[] = [
   {
     slug: "agentic-development",
     title: "Let your AI agent see and drive the Simulator",
-    subtitle: "Drive the iOS Simulator with Claude Code, Cursor, and any MCP client.",
-    metaTitle: "Agentic Development | CosmoKit for iOS Simulator",
+    subtitle:
+      "A CLI, an MCP server, and an Agent Skill for Claude Code, Cursor, Codex, and any MCP client to read and drive the iOS Simulator.",
+    metaTitle: "Agentic Development | CosmoKit CLI for iOS Simulator",
     metaDescription:
-      "Let AI agents see and drive the iOS Simulator via CLI, MCP server, and Agent Skill.",
-    cardBlurb: "Drive the Simulator with Claude Code, Cursor, Codex and any MCP client.",
+      "Let AI agents read and drive the iOS Simulator through the CosmoKit CLI, MCP server, and Agent Skill.",
+    cardBlurb: "Let Claude Code and Cursor drive the Simulator from an agent loop.",
+    ctaTitle: "Ready to test?",
     blocks: [
       {
-        title: "Coming soon",
-        body: "Full feature details are coming soon.",
-        bullets: [],
+        title: "Compact screen summaries",
+        subtitle: "Read the screen before you act",
+        body: "Ask the CLI for a compact tree instead of parsing a screenshot. Every interactive element has a stable reference and the snapshot carries a screen hash for safe follow-up actions.",
+        bullets: [
+          "act lists interactive elements and stable refs for actions",
+          "nav includes interactive elements plus useful navigation headings",
+          "debug includes the full hierarchy and accessibility identifiers",
+          "Use --max on long screens to keep the response bounded",
+        ],
+        code: {
+          lang: "text",
+          content:
+            "$ cosmokit ui tree --mode act\n[1] cell \"Settings\" (0,0 390×50)\n[2] cell \"General\" (0,50 390×50)\n[3] button \"Add Account\" (0,100 390×50)\nscreen: 8f2a1cde",
+        },
+      },
+      {
+        title: "Act without guessing",
+        subtitle: "Refs, waits, and a guard against stale screens",
+        body: "Use refs from the latest tree with tap, press, swipe, type, button, alert, or find. Pass --screen <hash> to refuse an action when the UI changed; screenChanged and refStale tell the agent to read a fresh tree.",
+        bullets: [
+          "ui wait waits for text to appear or disappear without polling trees",
+          "ui do batches known steps and stops at the first failure with its step index",
+          "Prefer refs over coordinates and re-read after a screen change",
+          "Use one tree per step; take a screenshot only when layout matters",
+        ],
+        code: {
+          lang: "bash",
+          content:
+            "screen=$(cosmokit ui tree --mode act | sed -n 's/^screen: //p')\ncosmokit ui tap 2 --screen \"$screen\"\ncosmokit ui wait \"General\" && cosmokit ui tree --mode act",
+        },
+      },
+      {
+        title: "Follow along in your browser",
+        subtitle: "Let a person leave feedback on the live simulator",
+        body: "cosmokit agent stream serves a loopback MJPEG page with a per-session token. Click an element in the browser to see its resolved type, label, identifier, and frame, then leave a comment for the agent to read and acknowledge.",
+        bullets: [
+          "Start the local stream with cosmokit agent stream --open",
+          "Read comments with cosmokit feedback next or feedback list",
+          "Clear handled comments with cosmokit feedback ack <seq>",
+          "The stream stays on loopback and does not add a service to your app",
+        ],
+        image: {
+          src: "/features/agentic-development/stream.png",
+          alt: "CosmoKit Stream showing an iOS Simulator, element details, and agent feedback",
+        },
+      },
+      {
+        title: "Works with the tools you already use",
+        subtitle: "Shell, MCP, Claude Code, Cursor, and Codex",
+        body: "Use the same simulator operations from a terminal or expose them to an MCP client over stdio. The cosmokit-simulator Agent Skill teaches Claude Code the tree, act, wait, and feedback loop; Cursor can use the included rule, and any MCP client can use the configuration snippet.",
+        bullets: [
+          "cosmokit mcp exposes 52 typed simulator tools over stdio",
+          "Install the Claude Code skill with cp -r skills/cosmokit-simulator ~/.claude/skills/",
+          "Use cli/examples/cursor-rule.mdc for the same loop in Cursor",
+          "Register cli/examples/mcp.json with any MCP client",
+        ],
+        code: {
+          lang: "json",
+          content:
+            '{\n  "mcpServers": {\n    "cosmokit": {\n      "command": "cosmokit",\n      "args": ["mcp"]\n    }\n  }\n}',
+        },
+      },
+      {
+        title: "Nothing added to your app",
+        subtitle: "A public-API XCUITest driver runs beside it",
+        body: "The driver runs on the simulator through XCUITest public APIs. It does not require an SDK, framework, source access, or changes to the app you are testing, so it can drive apps you did not write.",
+        bullets: [
+          "Run cosmokit doctor to check simulator and driver setup",
+          "Run cosmokit agent start to build or reuse the driver",
+          "The driver exposes status, app, tree, action, screenshot, and quit endpoints",
+          "The first agent start builds the driver cold; later starts reuse the cached build",
+        ],
+      },
+      {
+        title: "Free, on every plan",
+        subtitle: "Start with the agent loop before you choose a plan",
+        body: "The cosmokit CLI and agent mode are free. Install the CLI, run doctor, start the driver, and let your agent inspect the Simulator without adding anything to the app you are testing.",
+        bullets: [
+          "Read the full CLI guide and setup steps",
+          "Use the same commands from scripts, editors, or MCP clients",
+          "Compare the rest of CosmoKit's plans and features on the pricing page",
+        ],
       },
     ],
     launched: false,

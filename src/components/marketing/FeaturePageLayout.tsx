@@ -133,7 +133,7 @@ export function FeaturePageLayout({ page }: { page: FeaturePageDef }) {
         </section>
       )}
 
-      <ReadyCTA />
+      <ReadyCTA title={page.ctaTitle} />
     </MarketingShell>
   );
 }
