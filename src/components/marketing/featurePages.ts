@@ -46,7 +46,7 @@ export const FEATURE_PAGES: FeaturePageDef[] = [
         code: {
           lang: "text",
           content:
-            "$ cosmokit ui tree --mode act\n[1] cell \"Settings\" (0,0 390×50)\n[2] cell \"General\" (0,50 390×50)\n[3] button \"Add Account\" (0,100 390×50)\nscreen: 8f2a1cde",
+            "$ cosmokit ui tree --mode act\n[1] cell \"Settings\" (0,0 390×50)\n[2] cell \"General\" (0,50 390×50)\n[3] button \"Add Account\" (0,100 390×50)\nscreen: 84346bb2",
         },
       },
       {
