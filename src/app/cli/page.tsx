@@ -179,6 +179,16 @@ export default function CliPage() {
               <h3 className="text-sm font-semibold mb-2 text-foreground">
                 Agent Skill and MCP
               </h3>
+              <p className="text-xs text-muted-foreground leading-relaxed mb-3">
+                The agent commands above are documented in the full{" "}
+                <Link
+                  href="/features/agentic-development/"
+                  className="text-violet-light underline underline-offset-2"
+                >
+                  agentic development guide
+                </Link>
+                .
+              </p>
               <p className="text-xs text-muted-foreground leading-relaxed">
                 Install the Claude Code skill with <code className="text-violet-light bg-violet-DEFAULT/10 px-1 py-0.5 rounded">cp -r skills/cosmokit-simulator ~/.claude/skills/</code> to give your agent native simulator steering. For Claude Code, Cursor, or any MCP client, add the <code className="text-violet-light bg-violet-DEFAULT/10 px-1 py-0.5 rounded">cosmokit mcp</code> server configuration from <code className="text-violet-light bg-violet-DEFAULT/10 px-1 py-0.5 rounded">examples/mcp.json</code> to expose all 52 simulator tools over stdio. Drop <code className="text-violet-light bg-violet-DEFAULT/10 px-1 py-0.5 rounded">examples/cursor-rule.mdc</code> into <code className="text-violet-light bg-violet-DEFAULT/10 px-1 py-0.5 rounded">.cursor/rules/</code> so Cursor automatically prefers fast UI tree inspection and batched actions when driving tests.
               </p>

@@ -38,6 +38,7 @@
     "title": "Tudo que você precisa, {highlight}",
     "titleHighlight": "em um painel",
     "subtitle": "Substitua dezenas de comandos {command} por uma interface intuitiva.",
+    "learnMore": "Saiba mais →",
     "items": {
       "screenshot": {
         "title": "Captura de Tela",
@@ -273,6 +274,7 @@
     "terms": "Termos de Serviço",
     "macAppStore": "Mac App Store",
     "cli": "Ferramenta de linha de comando",
+    "allFeatures": "Todos os recursos",
     "copyright": "© {year} CosmoHQ. Todos os direitos reservados.",
     "builtWith": "Feito com SwiftUI · macOS 14.7+"
   },

@@ -15,7 +15,7 @@ export type FeaturePageDef = {
   metaDescription: string;
   cardBlurb: string; // one line on the /features/ grid
   blocks: FeatureBlock[];
-  launched: boolean; // false until FH-06
+  launched: boolean;
   related?: string[]; // other slugs, rendered as links above the CTA
   externalHref?: string; // card links here instead of /features/<slug>/ (used for /cli/)
   ctaTitle?: string;
@@ -118,7 +118,7 @@ export const FEATURE_PAGES: FeaturePageDef[] = [
         ],
       },
     ],
-    launched: false,
+    launched: true,
     related: ["network-proxy", "control-panel"],
   },
   {
@@ -197,7 +197,7 @@ export const FEATURE_PAGES: FeaturePageDef[] = [
         },
       },
     ],
-    launched: false,
+    launched: true,
     related: ["agentic-development", "app-environment"],
   },
   {
@@ -282,7 +282,7 @@ export const FEATURE_PAGES: FeaturePageDef[] = [
         ],
       },
     ],
-    launched: false,
+    launched: true,
     related: ["app-environment", "agentic-development"],
   },
   {
@@ -383,7 +383,7 @@ export const FEATURE_PAGES: FeaturePageDef[] = [
         },
       },
     ],
-    launched: false,
+    launched: true,
     related: ["control-panel", "agentic-development"],
   },
   {
@@ -451,7 +451,7 @@ export const FEATURE_PAGES: FeaturePageDef[] = [
         },
       },
     ],
-    launched: false,
+    launched: true,
     related: ["control-panel", "push-and-deep-links"],
   },
   {
@@ -519,7 +519,7 @@ export const FEATURE_PAGES: FeaturePageDef[] = [
         },
       },
     ],
-    launched: false,
+    launched: true,
     related: ["location", "app-environment"],
   },
   {
@@ -598,7 +598,7 @@ export const FEATURE_PAGES: FeaturePageDef[] = [
         },
       },
     ],
-    launched: false,
+    launched: true,
     related: ["push-and-deep-links", "agentic-development"],
   },
   {
@@ -615,4 +615,4 @@ export const FEATURE_PAGES: FeaturePageDef[] = [
 ];
 
 export const isShown = (p: FeaturePageDef) =>
-  p.launched || process.env.NEXT_PUBLIC_SHOW_UNLAUNCHED === "1";
+  p.launched;
