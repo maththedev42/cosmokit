@@ -44,6 +44,8 @@ const FEATURES = [
   "Deep link testing with saved links",
   "GPS location and route simulation",
   "MITM network proxy for simulator traffic",
+  "Agent CLI, MCP server and Agent Skill (Claude Code, Cursor, Codex)",
+  "Live browser stream with click-to-element feedback",
   "Multiple simulators side by side",
   "Menu bar quick capture and a global capture shortcut",
   "English, Spanish and Portuguese localization",

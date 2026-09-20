@@ -6,7 +6,7 @@
 // natural upgrade once someone is in the workflow.
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Check, ArrowRight, Terminal } from "lucide-react";
+import { Check, ArrowRight, Terminal, Bot } from "lucide-react";
 import {
   MarketingShell,
   PageHero,
@@ -35,6 +35,30 @@ const COMMANDS = [
   ["cosmokit location <lat> <lon>", "Set the simulator's GPS position"],
   ["cosmokit open <url>", "Open a deep link"],
   ["cosmokit erase [name|udid]", "Erase a simulator to a fresh install"],
+];
+
+const AGENT_COMMANDS = [
+  ["cosmokit agent start [name|udid]", "Start the XCUITest simulator driver"],
+  ["cosmokit agent stop [name|udid]", "Stop the simulator driver"],
+  ["cosmokit agent status [name|udid]", "Check driver reachability"],
+  ["cosmokit agent stream [name|udid]", "Stream simulator to browser for feedback"],
+  ["cosmokit ui tree", "Print the compact UI tree"],
+  ["cosmokit ui wait \"<text>\"", "Wait for UI element to appear or disappear"],
+  ["cosmokit ui do <step> [<step>...]", "Run a sequence of UI actions"],
+  ["cosmokit ui tap <ref|x,y>", "Tap an element or coordinate"],
+  ["cosmokit ui press <ref>", "Long-press an element"],
+  ["cosmokit ui swipe <direction>", "Swipe up, down, left, or right"],
+  ["cosmokit ui type <text>", "Type into the active field"],
+  ["cosmokit ui button <name>", "Press a hardware button"],
+  ["cosmokit ui alert <action>", "Accept, dismiss, or press an alert button"],
+  ["cosmokit ui screenshot", "Capture the current UI as PNG"],
+  ["cosmokit ui find <text>", "Find matching UI elements"],
+  ["cosmokit feedback next", "Wait for the next human comment"],
+  ["cosmokit feedback list", "List all feedback comments"],
+  ["cosmokit feedback ack <seq>", "Mark feedback comment answered"],
+  ["cosmokit feedback clear", "Clear all feedback comments"],
+  ["cosmokit mcp", "Run as an MCP server over stdio"],
+  ["cosmokit doctor", "Check simulator and driver setup"],
 ];
 
 const USES = [
@@ -92,34 +116,74 @@ export default function CliPage() {
             </Link>
             .
           </p>
+
+          <div className="mt-6 rounded-xl border border-border/60 bg-card/40 p-5">
+            <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">
+              Or build from source
+            </p>
+            <pre className="overflow-x-auto rounded-lg bg-background/60 border border-border/40 p-3 text-xs font-mono text-violet-light">
+              <code>{`git clone https://github.com/maththedev42/cosmokit-cli.git\ncd cosmokit-cli\nswift build -c release\ncp .build/release/cosmokit /usr/local/bin/`}</code>
+            </pre>
+          </div>
         </div>
       </section>
 
       <section className="container mx-auto px-4 pb-16">
-        <div className="max-w-3xl mx-auto rounded-2xl border border-border/60 bg-card/40 p-8">
-          <div className="flex items-center gap-2.5 mb-6">
-            <Terminal className="h-5 w-5 text-violet-light" />
-            <h2 className="text-2xl font-bold">Commands</h2>
+        <div className="max-w-3xl mx-auto space-y-8">
+          <div className="rounded-2xl border border-border/60 bg-card/40 p-8">
+            <div className="flex items-center gap-2.5 mb-6">
+              <Terminal className="h-5 w-5 text-violet-light" />
+              <h2 className="text-2xl font-bold">Commands</h2>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm border-collapse">
+                <tbody>
+                  {COMMANDS.map(([cmd, desc]) => (
+                    <tr key={cmd} className="border-b border-border/40 last:border-0">
+                      <td className="py-2.5 pr-6 font-mono text-xs whitespace-nowrap text-violet-light">
+                        {cmd}
+                      </td>
+                      <td className="py-2.5 text-muted-foreground">{desc}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <p className="mt-5 text-xs text-muted-foreground/70">
+              Device arguments accept a UDID, an exact name or a partial name.
+              Omit them to use the booted simulator. <code>--output</code> sets
+              the directory for <code>capture</code> and <code>record</code>.
+            </p>
           </div>
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm border-collapse">
-              <tbody>
-                {COMMANDS.map(([cmd, desc]) => (
-                  <tr key={cmd} className="border-b border-border/40 last:border-0">
-                    <td className="py-2.5 pr-6 font-mono text-xs whitespace-nowrap text-violet-light">
-                      {cmd}
-                    </td>
-                    <td className="py-2.5 text-muted-foreground">{desc}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+
+          <div className="rounded-2xl border border-border/60 bg-card/40 p-8">
+            <div className="flex items-center gap-2.5 mb-6">
+              <Bot className="h-5 w-5 text-violet-light" />
+              <h2 className="text-2xl font-bold">For AI agents</h2>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm border-collapse">
+                <tbody>
+                  {AGENT_COMMANDS.map(([cmd, desc]) => (
+                    <tr key={cmd} className="border-b border-border/40 last:border-0">
+                      <td className="py-2.5 pr-6 font-mono text-xs whitespace-nowrap text-violet-light">
+                        {cmd}
+                      </td>
+                      <td className="py-2.5 text-muted-foreground">{desc}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <div className="mt-8 pt-6 border-t border-border/40">
+              <h3 className="text-sm font-semibold mb-2 text-foreground">
+                Agent Skill and MCP
+              </h3>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                Install the Claude Code skill with <code className="text-violet-light bg-violet-DEFAULT/10 px-1 py-0.5 rounded">cp -r skills/cosmokit-simulator ~/.claude/skills/</code> to give your agent native simulator steering. For Claude Code, Cursor, or any MCP client, add the <code className="text-violet-light bg-violet-DEFAULT/10 px-1 py-0.5 rounded">cosmokit mcp</code> server configuration from <code className="text-violet-light bg-violet-DEFAULT/10 px-1 py-0.5 rounded">examples/mcp.json</code> to expose all 52 simulator tools over stdio. Drop <code className="text-violet-light bg-violet-DEFAULT/10 px-1 py-0.5 rounded">examples/cursor-rule.mdc</code> into <code className="text-violet-light bg-violet-DEFAULT/10 px-1 py-0.5 rounded">.cursor/rules/</code> so Cursor automatically prefers fast UI tree inspection and batched actions when driving tests.
+              </p>
+            </div>
           </div>
-          <p className="mt-5 text-xs text-muted-foreground/70">
-            Device arguments accept a UDID, an exact name or a partial name.
-            Omit them to use the booted simulator. <code>--output</code> sets
-            the directory for <code>capture</code> and <code>record</code>.
-          </p>
         </div>
       </section>
 
