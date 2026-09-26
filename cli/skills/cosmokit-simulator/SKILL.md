@@ -13,6 +13,7 @@ verified. It uses the XCUITest driver and never depends on the CosmoKit app.
 ```sh
 cosmokit doctor
 cosmokit agent start
+# Simulate network conditions (optional): cosmokit throttle <preset> or cosmokit offline on (requires CosmoKit ≥ 4.8.0)
 ```
 
 ## Loop

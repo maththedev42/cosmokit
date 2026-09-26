@@ -80,6 +80,8 @@ cosmokit logs [--last <duration>]    Read a bounded log window
 cosmokit keychain <path> [name|udid] Install a trusted or untrusted certificate
 cosmokit keychain-reset [name|udid]  Reset the simulator keychain
 cosmokit proxy-status                Read the inherited system proxy
+cosmokit throttle <preset|status|custom> Simulate network conditions (edge, 3g, lte, verybad, off)
+cosmokit offline <on|off>            Toggle offline mode in the proxy
 cosmokit agent start [name|udid]     Start the XCUITest simulator driver
 cosmokit agent stop [name|udid]      Stop the simulator driver
 cosmokit agent status [name|udid]    Check driver reachability
@@ -122,6 +124,21 @@ Pasteboard writes use --set.
 proxy-status names enabled proxy hosts and ports in human output, and counts
 non-empty bypass rules.
 
+### Network conditions
+
+Simulate poor network conditions or offline states through CosmoKit's built-in MITM proxy:
+
+```sh
+cosmokit throttle 3g
+cosmokit throttle edge
+cosmokit throttle custom --latency-ms 250 --down-kbps 1200 --up-kbps 400 --failure-pct 2
+cosmokit throttle status
+cosmokit offline on
+cosmokit offline off
+```
+
+**Requirements:** Needs CosmoKit ≥ 4.8.0 running with the proxy on. The CLI never starts the proxy or modifies macOS system proxy settings; it controls network conditions inside an already-running CosmoKit proxy session. If the proxy is not running, commands return `proxyNotRunning` (HTTP 409).
+
 ## JSON output
 
 Pass `--json` to make any command print one machine-readable JSON object.
@@ -142,6 +159,9 @@ The stable error codes are:
 | `refStale` | A UI reference belongs to an older tree snapshot. |
 | `refNotFound` | No element exists for the requested UI reference. |
 | `unsupported` | The driver or simulator cannot perform the requested action. |
+| `appNotRunning` | CosmoKit is not running or control file missing. |
+| `appTooOld` | CosmoKit is older than 4.8.0; upgrade to use network conditions. |
+| `proxyNotRunning` | CosmoKit is running but its proxy is turned off. |
 
 Exit codes are unchanged, so a script can branch on either the process exit
 status or the JSON `ok` field.

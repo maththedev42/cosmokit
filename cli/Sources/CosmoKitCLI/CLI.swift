@@ -499,6 +499,12 @@ public enum CLI {
             let payload = parseProxyStatus(proxySourceForTesting())
             return CommandOutcome(human: proxyHumanText(payload), json: payload)
 
+        case "throttle":
+            return try performThrottle(args)
+
+        case "offline":
+            return try performOffline(args)
+
         case "agent":
             guard let action = args.first else { throw usage("usage: cosmokit agent start|stop|status|stream [name|udid] [--port N]") }
             if action == "stream" {
@@ -1183,6 +1189,109 @@ public enum CLI {
         }
         let bypass = payload.bypassList.isEmpty ? "" : " (\(payload.bypassList.count) bypass rules)"
         return "\(line("HTTP", enabled: payload.httpEnabled, host: payload.httpHost, port: payload.httpPort)), \(line("HTTPS", enabled: payload.httpsEnabled, host: payload.httpsHost, port: payload.httpsPort))\(bypass)"
+    }
+
+    private static func performThrottle(_ args: [String]) throws -> CommandOutcome {
+        guard let first = args.first else {
+            throw usage("usage: cosmokit throttle <edge|3g|lte|verybad|off|status|custom [options]>")
+        }
+
+        if first == "status" {
+            let status = try AppControl.status()
+            return CommandOutcome(human: AppControl.humanText(for: status), json: status)
+        }
+
+        if first == "custom" {
+            var latencyMs: Int?
+            var downKbps: Int?
+            var upKbps: Int?
+            var failurePct: Int?
+
+            var index = 1
+            while index < args.count {
+                let arg = args[index]
+                switch arg {
+                case "--latency-ms":
+                    guard index + 1 < args.count, let val = Int(args[index + 1]) else {
+                        throw usage("--latency-ms requires an integer")
+                    }
+                    latencyMs = val
+                    index += 2
+                case "--down-kbps":
+                    guard index + 1 < args.count, let val = Int(args[index + 1]) else {
+                        throw usage("--down-kbps requires an integer")
+                    }
+                    downKbps = val
+                    index += 2
+                case "--up-kbps":
+                    guard index + 1 < args.count, let val = Int(args[index + 1]) else {
+                        throw usage("--up-kbps requires an integer")
+                    }
+                    upKbps = val
+                    index += 2
+                case "--failure-pct":
+                    guard index + 1 < args.count, let val = Int(args[index + 1]) else {
+                        throw usage("--failure-pct requires an integer")
+                    }
+                    failurePct = val
+                    index += 2
+                default:
+                    throw usage("unknown option for throttle custom: \(arg)")
+                }
+            }
+
+            var customDict: [String: Any] = [:]
+            if let latencyMs { customDict["latencyMs"] = latencyMs }
+            if let downKbps { customDict["downloadKbps"] = downKbps }
+            if let upKbps { customDict["uploadKbps"] = upKbps }
+            if let failurePct { customDict["failureRatePercent"] = failurePct }
+
+            let status = try AppControl.throttle(preset: nil, custom: customDict)
+            return CommandOutcome(human: AppControl.humanText(for: status), json: status)
+        }
+
+        let normalized: String
+        switch first.lowercased() {
+        case "edge":
+            normalized = "edge"
+        case "3g", "threeg":
+            normalized = "threeG"
+        case "lte":
+            normalized = "lte"
+        case "verybad":
+            normalized = "veryBad"
+        case "off":
+            normalized = "off"
+        case "offline":
+            normalized = "offline"
+        default:
+            if ["edge", "threeG", "lte", "veryBad", "off", "offline"].contains(first) {
+                normalized = first
+            } else {
+                throw usage("unknown preset '\(first)'; expected one of: edge, 3g, lte, verybad, off, custom, status")
+            }
+        }
+
+        let status = try AppControl.throttle(preset: normalized, custom: nil)
+        return CommandOutcome(human: AppControl.humanText(for: status), json: status)
+    }
+
+    private static func performOffline(_ args: [String]) throws -> CommandOutcome {
+        guard let first = args.first else {
+            throw usage("usage: cosmokit offline on|off")
+        }
+        let on: Bool
+        switch first.lowercased() {
+        case "on", "true", "1":
+            on = true
+        case "off", "false", "0":
+            on = false
+        default:
+            throw usage("usage: cosmokit offline on|off")
+        }
+
+        let status = try AppControl.offline(on: on)
+        return CommandOutcome(human: AppControl.humanText(for: status), json: status)
     }
 
     private static func parseDefaultsReadArgs(_ args: [String]) throws -> (bundleID: String, device: String?) {

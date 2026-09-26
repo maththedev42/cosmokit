@@ -275,6 +275,48 @@ public enum MCPServer {
             }
             if let device = try optionalString(arguments, key: "device") { args.append(device) }
             return ("feedback", args, nil)
+        case "network_conditions":
+            let action = try optionalString(arguments, key: "action") ?? "status"
+            switch action {
+            case "status":
+                return ("throttle", ["status"], nil)
+            case "throttle":
+                if let preset = try optionalString(arguments, key: "preset") {
+                    return ("throttle", [preset], nil)
+                } else if let custom = arguments["custom"] as? [String: Any] {
+                    var args = ["custom"]
+                    if let latency = custom["latency_ms"] as? Int {
+                        args += ["--latency-ms", String(latency)]
+                    }
+                    if let down = custom["download_kbps"] as? Int {
+                        args += ["--down-kbps", String(down)]
+                    }
+                    if let up = custom["upload_kbps"] as? Int {
+                        args += ["--up-kbps", String(up)]
+                    }
+                    if let failure = custom["failure_pct"] as? Int {
+                        args += ["--failure-pct", String(failure)]
+                    }
+                    return ("throttle", args, nil)
+                } else {
+                    throw usageError("throttle action requires preset or custom")
+                }
+            case "offline":
+                guard let onValue = arguments["on"] else {
+                    throw usageError("offline action requires 'on' (boolean)")
+                }
+                let onBool: Bool
+                if let b = onValue as? Bool {
+                    onBool = b
+                } else if let s = onValue as? String {
+                    onBool = (s == "true" || s == "on")
+                } else {
+                    throw usageError("'on' must be a boolean or 'on'/'off'")
+                }
+                return ("offline", [onBool ? "on" : "off"], nil)
+            default:
+                throw usageError("action must be one of: status, throttle, offline")
+            }
         case "doctor": return ("doctor", [], nil)
         default:
             throw CLIError(commandError: CommandError(code: .unknownCommand, message: "Unknown tool: \(tool)"))
@@ -548,6 +590,21 @@ public enum MCPServer {
             tool("delete_default", "Delete an app UserDefaults value. Restart the app for the change to take effect.", properties: ["bundle_id": ["type": "string"], "key": ["type": "string"], "device": device], required: ["bundle_id", "key"]),
             tool("get_logs", "Read the last bounded simulator log window, keeping at most the last 500 lines.", properties: ["last": ["type": "string", "description": "30s, 5m, or 1h; defaults to 1m"], "predicate": ["type": "string"], "bundle_id": ["type": "string", "description": "Convenience subsystem predicate when predicate is omitted"], "device": device], required: []),
             tool("proxy_status", "Read the system HTTP and HTTPS proxy inherited by simulators, including hosts, ports, and bypass entries; this command never changes settings.", properties: [:], required: []),
+            tool("network_conditions", "Inspect or set simulated network conditions (throttle preset/custom, or offline mode) in CosmoKit's proxy. Requires CosmoKit running with proxy enabled.", properties: [
+                "action": ["type": "string", "enum": ["status", "throttle", "offline"], "description": "Action: status, throttle, or offline"],
+                "preset": ["type": "string", "enum": ["edge", "3g", "lte", "verybad", "off"], "description": "Preset name for throttle action"],
+                "custom": [
+                    "type": "object",
+                    "description": "Custom conditions for throttle action",
+                    "properties": [
+                        "latency_ms": ["type": "integer", "description": "Added latency in milliseconds"],
+                        "download_kbps": ["type": "integer", "description": "Download bandwidth in kbps"],
+                        "upload_kbps": ["type": "integer", "description": "Upload bandwidth in kbps"],
+                        "failure_pct": ["type": "integer", "description": "Drop failure percentage (0-100)"]
+                    ]
+                ],
+                "on": ["type": "boolean", "description": "Whether offline mode is enabled for offline action"]
+            ], required: []),
             tool("agent_start", "Start the XCUITest simulator driver; use this before UI commands. It needs Xcode on the first run and is warm afterward.", properties: ["device": device, "port": ["type": "integer"]], required: []),
             tool("agent_stop", "Stop the XCUITest simulator driver when UI work is finished.", properties: ["device": device], required: []),
             tool("agent_status", "Check whether the XCUITest simulator driver is reachable.", properties: ["device": device], required: []),
