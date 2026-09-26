@@ -392,6 +392,8 @@ deliberate price of keeping the full simulator surface in one server; splitting
 it would move complexity into every user's configuration. Reproduce the
 measurement with `printf '%s\n' '{"jsonrpc":"2.0","id":1,"method":"tools/list"}' | .build/release/cosmokit mcp | wc -c` from `cli/`; the 56-tool response measured 19,796 bytes including its newline, and a test keeps it under 20,096 bytes so growth cannot go unnoticed.
 
+For UI tree inspection, `cosmokit ui tree --mode act` filters accessibility hierarchies down to interactive elements, achieving a mean 93.0% reduction in output bytes vs the raw driver tree (and 68.6% reduction vs `idb describe-all`). See [BENCHMARK.md](BENCHMARK.md) for full reproducible numbers, hardware/OS environment, and method across test screens.
+
 ### Chat with the human
 
 When CosmoKit is running, `cosmokit mcp` registers one chat thread for the
