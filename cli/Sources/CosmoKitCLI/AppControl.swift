@@ -176,6 +176,45 @@ public enum AppControl {
         }
     }
 
+    /// Performs an authenticated request without imposing the network-status
+    /// response schema. Chat routes return their own payloads.
+    public static func request(path: String, method: String = "GET", body: Data? = nil,
+                               timeout: TimeInterval = 5) throws -> Data {
+        let info = try readControlInfo()
+        guard let url = URL(string: "http://127.0.0.1:\(info.port)\(path)") else {
+            throw CLIError(commandError: CommandError(code: .unsupported, message: "Invalid URL for loopback endpoint"))
+        }
+        var request = URLRequest(url: url)
+        request.httpMethod = method
+        request.httpBody = body
+        request.timeoutInterval = timeout
+        request.setValue("Bearer \(info.token)", forHTTPHeaderField: "Authorization")
+        if body != nil { request.setValue("application/json", forHTTPHeaderField: "Content-Type") }
+
+        let data: Data
+        let statusCode: Int
+        if let customHTTP = httpForTesting {
+            (data, statusCode) = try customHTTP(request)
+        } else {
+            let semaphore = DispatchSemaphore(value: 0)
+            var result: Result<(Data, Int), Error>!
+            URLSession.shared.dataTask(with: request) { d, response, error in
+                if let error { result = .failure(error) }
+                else { result = .success((d ?? Data(), (response as? HTTPURLResponse)?.statusCode ?? 200)) }
+                semaphore.signal()
+            }.resume()
+            semaphore.wait()
+            (data, statusCode) = try result.get()
+        }
+        guard (200...299).contains(statusCode) else {
+            let object = (try? JSONSerialization.jsonObject(with: data)) as? [String: Any]
+            let error = object?["error"] as? [String: Any]
+            let message = error?["message"] as? String ?? "Control endpoint returned HTTP \(statusCode)"
+            throw CLIError(commandError: CommandError(code: statusCode == 404 ? .unsupported : .driverUnavailable, message: message))
+        }
+        return data
+    }
+
     public static func status() throws -> NetworkStatusPayload {
         try call(path: "/v1/status", method: "GET")
     }

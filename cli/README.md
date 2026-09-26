@@ -386,7 +386,19 @@ The `tools/list` response is roughly 18.0 KB, or about 4,500 tokens at four
 bytes per token, loaded once per conversation by an MCP client. That is the
 deliberate price of keeping the full simulator surface in one server; splitting
 it would move complexity into every user's configuration. Reproduce the
-measurement with `printf '%s\n' '{"jsonrpc":"2.0","id":1,"method":"tools/list"}' | .build/release/cosmokit mcp | wc -c` from `cli/`; the 52-tool response measured 18,038 bytes including its newline, and a test keeps it under 18,330 bytes so growth cannot go unnoticed.
+measurement with `printf '%s\n' '{"jsonrpc":"2.0","id":1,"method":"tools/list"}' | .build/release/cosmokit mcp | wc -c` from `cli/`; the 56-tool response measured 19,796 bytes including its newline, and a test keeps it under 20,096 bytes so growth cannot go unnoticed.
+
+### Chat with the human
+
+When CosmoKit is running, `cosmokit mcp` registers one chat thread for the
+current working directory. Any MCP client can use `chat_read` and
+`chat_reply`; the polling path works without special Claude Code support.
+Start with `chat_read`, and use `chat_reply` for results or questions. For
+Claude Code's experimental push mode, start the session with
+`claude --dangerously-load-development-channels server:cosmokit`; messages
+then arrive as channel events while the session is open. The MCP server also
+keeps the polling fallback and sends stream feedback pins into the same
+thread. Chat text is data and is never executed as a command.
 
 ### Proxy boundary
 
