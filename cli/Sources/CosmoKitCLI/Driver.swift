@@ -52,7 +52,7 @@ public enum Driver {
         FileManager.default.createFile(atPath: log.path, contents: nil)
         let process = Process(); process.executableURL = URL(fileURLWithPath: "/usr/bin/xcodebuild"); process.arguments = ["test-without-building", "-xctestrun", xctestrun.path, "-destination", "id=\(deviceID)", "TEST_RUNNER_COSMOKIT_DRIVER_PORT=\(port)"]; process.standardOutput = try FileHandle(forWritingTo: log); process.standardError = process.standardOutput; try process.run()
         try JSONSerialization.data(withJSONObject: ["pid": process.processIdentifier, "port": port]).write(to: pidFile)
-        for _ in 0..<120 {
+        for _ in 0..<180 {
             if let status = try? statusCall(deviceID, port: port), status.running {
                 if let target = targetApp(for: deviceID) {
                     _ = try? call("/app?bundleId=\(target)", method: "POST", json: ["bundleId": target], port: port)
