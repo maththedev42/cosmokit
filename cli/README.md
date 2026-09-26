@@ -30,7 +30,7 @@ signed rather than notarized, so macOS quarantines it on download and you have
 to clear that yourself:
 
 ```sh
-tar xzf cosmokit-0.3.0-macos-universal.tar.gz
+tar xzf cosmokit-0.4.0-macos-universal.tar.gz
 xattr -d com.apple.quarantine cosmokit
 mv cosmokit /usr/local/bin/
 ```

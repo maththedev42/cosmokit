@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.4.0 — 2026-09-26
+
+- Added interactive Control mode to `agent stream`: click to tap, drag to swipe, debounced typing into focused fields, and hardware home button.
+- Fixed `agent stream --daemon` exiting prematurely by keeping the server running in the background.
+- Added structured feedback prompt export: `FeedbackPrompt.render`, `cosmokit feedback prompt [--seq N]`, and a "Copy prompt" button on the stream page.
+- Added `cosmokit throttle <preset|custom>` and `cosmokit offline <on|off>` via the app's loopback control server, plus `network_conditions` MCP tool (53 tools total).
+- Fixed driver targeting so `ui tree` and UI actions inspect the target app rather than the test host, supporting `--app <bundle>` and automatic persistence across driver restarts.
+- Added reproducible UI-tree size and timing benchmark (`cli/scripts/benchmark.sh` and `cli/BENCHMARK.md`), documenting a 93.0% output size reduction vs raw driver trees.
+
 ## 0.3.0 — 2026-09-08
 
 - Added client-side screen hash to `ui tree` and `--screen` guard to UI actions (`screenChanged` error).

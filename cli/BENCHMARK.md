@@ -4,7 +4,7 @@
 - macOS: 26.4
 - Xcode: Xcode 26.4.1 Build version 17E202
 - Simulator: iPhone 16 Pro (B5029438-33A9-47E0-ACA4-C7B790A12E64), 
-- CLI version: 0.3.0
+- CLI version: 0.4.0
 - Test app commit: 3b54f749eb988fe839e91b45129297089871ecf0
 - idb: installed
 - Reproduce: `bash cli/scripts/benchmark.sh --udid B5029438-33A9-47E0-ACA4-C7B790A12E64 --app apps.mjkweber.CosmoKitTestApp --screens home,list,form,modal --write`
