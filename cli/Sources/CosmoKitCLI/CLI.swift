@@ -319,6 +319,10 @@ public enum CLI {
             let device = try resolveDevice(args.count > 1 ? args[1] : nil)
             let simctlOutput = try runSimctl(["launch", device.udid, bundleID])
             let pid = simctlOutput.split(whereSeparator: { $0 == ":" || $0 == " " || $0 == "\n" }).compactMap { Int($0) }.first
+            Driver.saveTargetApp(bundleID, for: device.udid)
+            if Driver.status(device: device.udid).running {
+                _ = try? Driver.call("/app?bundleId=\(bundleID)", method: "POST", json: ["bundleId": bundleID])
+            }
             return CommandOutcome(human: simctlOutput.trimmingCharacters(in: .whitespacesAndNewlines), json: LaunchPayload(udid: device.udid, name: device.name, bundleID: bundleID, pid: pid))
 
         case "terminate":
@@ -544,7 +548,24 @@ public enum CLI {
             snapshot.screen = hash
             return CommandOutcome(human: UITree.compact(snapshot, mode: mode, maxLines: max), json: snapshot)
         case "find":
-            guard args.count > 1 else { throw usage("ui find requires text") }; let snapshot = try UITree.parse(Driver.call("/tree")); let matches = UITree.find(snapshot, text: args.dropFirst().joined(separator: " ")); return CommandOutcome(human: matches.map { "[\($0.ref)] \($0.type) \($0.label ?? $0.value ?? "")" }.joined(separator: "\n"), json: matches)
+            var searchApp: String?
+            var findArgs: [String] = []
+            var fi = 1
+            while fi < args.count {
+                if args[fi] == "--app" && fi + 1 < args.count {
+                    searchApp = args[fi + 1]
+                    fi += 2
+                } else {
+                    findArgs.append(args[fi])
+                    fi += 1
+                }
+            }
+            guard !findArgs.isEmpty else { throw usage("ui find requires text") }
+            var findQuery: [String: Any] = [:]
+            if let searchApp { findQuery["app"] = searchApp }
+            let snapshot = try UITree.parse(Driver.call("/tree", method: "GET", json: findQuery.isEmpty ? nil : findQuery))
+            let matches = UITree.find(snapshot, text: findArgs.joined(separator: " "))
+            return CommandOutcome(human: matches.map { "[\($0.ref)] \($0.type) \($0.label ?? $0.value ?? "")" }.joined(separator: "\n"), json: matches)
         case "tap":
             guard args.count > 1 else { throw usage("ui tap requires a ref or x,y") }; return try uiAction("/tap", args: Array(args.dropFirst()))
         case "press":
@@ -564,6 +585,7 @@ public enum CLI {
             var timeout: Double = 10.0
             var gone = false
             var interval: Double = 0.3
+            var waitApp: String?
             var index = 1
             while index < args.count {
                 switch args[index] {
@@ -572,6 +594,9 @@ public enum CLI {
                     index += 2
                 case "--interval" where index + 1 < args.count:
                     if let val = Double(args[index + 1]) { interval = val }
+                    index += 2
+                case "--app" where index + 1 < args.count:
+                    waitApp = args[index + 1]
                     index += 2
                 case "--gone":
                     gone = true
@@ -586,8 +611,10 @@ public enum CLI {
             guard !text.isEmpty else { throw usage("ui wait requires search text") }
 
             let start = Date()
+            var waitQuery: [String: Any] = [:]
+            if let waitApp { waitQuery["app"] = waitApp }
             while true {
-                let data = try Driver.call("/tree")
+                let data = try Driver.call("/tree", method: "GET", json: waitQuery.isEmpty ? nil : waitQuery)
                 let snapshot = try UITree.parse(data)
                 let matches = UITree.find(snapshot, text: text)
                 if gone {
@@ -693,10 +720,17 @@ public enum CLI {
 
     private static func uiAction(_ path: String, args: [String]) throws -> CommandOutcome {
         var cleanArgs = args
+        var targetApp: String?
+        if let appIdx = cleanArgs.firstIndex(of: "--app"), appIdx + 1 < cleanArgs.count {
+            targetApp = cleanArgs[appIdx + 1]
+            cleanArgs.removeSubrange(appIdx...appIdx + 1)
+        }
         if let screenIdx = cleanArgs.firstIndex(of: "--screen"), screenIdx + 1 < cleanArgs.count {
             let expectedHash = cleanArgs[screenIdx + 1]
             cleanArgs.removeSubrange(screenIdx...screenIdx + 1)
-            let data = try Driver.call("/tree")
+            var query: [String: Any] = [:]
+            if let targetApp { query["app"] = targetApp }
+            let data = try Driver.call("/tree", method: "GET", json: query.isEmpty ? nil : query)
             let snapshot = try UITree.parse(data)
             let actualHash = UITree.screenHash(snapshot)
             if actualHash != expectedHash {
@@ -709,6 +743,7 @@ public enum CLI {
             }
         }
         var body: [String: Any] = [:]
+        if let targetApp { body["app"] = targetApp }
         if let first = cleanArgs.first {
             if let ref = Int(first) {
                 body["ref"] = ref

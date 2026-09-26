@@ -114,6 +114,10 @@ Ctrl-C.
 Device arguments accept a UDID, an exact name, or a partial name. Omit them to
 use the booted simulator.
 
+Target applications: `ui tree`, `ui tap`, `ui swipe`, `ui type`, `ui wait`, and
+`ui find` accept `--app <bundle>` to inspect or drive a specific target app.
+`cosmokit agent start` automatically targets the last app launched via `cosmokit launch`.
+
 Commands exit non-zero on failure, so they are safe to use under `set -e`.
 
 Push input precedence is --payload, then --payload-file, then stdin. Defaults
