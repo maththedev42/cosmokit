@@ -22,6 +22,9 @@ public enum ErrorCode: String, Codable {
     case unsupported
     case timeout
     case screenChanged
+    case appNotRunning
+    case appTooOld
+    case proxyNotRunning
 }
 
 public struct FeedbackElementPayload: Codable, Equatable {
@@ -74,6 +77,11 @@ public struct FeedbackClearPayload: Codable, Equatable {
     public init(cleared: Bool, count: Int) { self.cleared = cleared; self.count = count }
 }
 
+public struct FeedbackPromptPayload: Codable, Equatable {
+    public let text: String
+    public init(text: String) { self.text = text }
+}
+
 public struct DriverStatusPayload: Codable {
     public let running: Bool
     public let port: Int?
@@ -103,12 +111,61 @@ public struct CommandError: Codable, Equatable {
     public let message: String
     public let expected: String?
     public let actual: String?
+    public let hint: String?
 
-    public init(code: ErrorCode, message: String, expected: String? = nil, actual: String? = nil) {
+    public init(code: ErrorCode, message: String, expected: String? = nil, actual: String? = nil, hint: String? = nil) {
         self.code = code
         self.message = message
         self.expected = expected
         self.actual = actual
+        self.hint = hint
+    }
+}
+
+public struct NetworkProxyInfoPayload: Codable, Equatable {
+    public let running: Bool
+    public let port: Int
+    public init(running: Bool, port: Int) {
+        self.running = running
+        self.port = port
+    }
+}
+
+public struct NetworkConditionsPayload: Codable, Equatable {
+    public let preset: String?
+    public let latencyMs: Int?
+    public let downloadKbps: Int?
+    public let uploadKbps: Int?
+    public let failureRatePercent: Int?
+    public let failureMode: String?
+    public let timeoutSeconds: Int?
+    public init(
+        preset: String? = nil,
+        latencyMs: Int? = nil,
+        downloadKbps: Int? = nil,
+        uploadKbps: Int? = nil,
+        failureRatePercent: Int? = nil,
+        failureMode: String? = nil,
+        timeoutSeconds: Int? = nil
+    ) {
+        self.preset = preset
+        self.latencyMs = latencyMs
+        self.downloadKbps = downloadKbps
+        self.uploadKbps = uploadKbps
+        self.failureRatePercent = failureRatePercent
+        self.failureMode = failureMode
+        self.timeoutSeconds = timeoutSeconds
+    }
+}
+
+public struct NetworkStatusPayload: Codable, Equatable {
+    public let proxy: NetworkProxyInfoPayload
+    public let conditions: NetworkConditionsPayload
+    public let offline: Bool
+    public init(proxy: NetworkProxyInfoPayload, conditions: NetworkConditionsPayload, offline: Bool) {
+        self.proxy = proxy
+        self.conditions = conditions
+        self.offline = offline
     }
 }
 

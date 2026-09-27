@@ -95,6 +95,10 @@
         "title": "UserDefaults Editor",
         "description": "Read the app's live defaults, flip a flag, rewrite an array or delete a key, then restart the app from the panel."
       },
+      "diagnostics": {
+        "title": "Scheme Diagnostics",
+        "description": "Zombies, Main Thread Checker, Core Data SQL logging and 8 more Xcode diagnostics — attached to a profile, not a scheme. Turn them on once, run them every time."
+      },
       "presets": {
         "title": "Dev Presets",
         "description": "Restore a whole working setup in one click instead of rebuilding it by hand every morning."

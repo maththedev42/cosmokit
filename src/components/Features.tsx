@@ -24,6 +24,7 @@ import {
   TerminalSquare,
   PanelTop,
   ImagePlus,
+  Stethoscope,
 } from "lucide-react";
 import { type LucideIcon } from "lucide-react";
 import { useLocale, useTranslations } from "@/lib/i18n";
@@ -55,6 +56,9 @@ const featureDefs: FeatureDef[] = [
   // the 4.6 headline and the thing every other tool now hangs off.
   { icon: Layers, key: "profiles", shot: "profiles", span: "lg" },
   { icon: Database, key: "userdefaults", span: "sm" },
+  // Diagnostics sits between profiles and capture — it is a profile feature
+  // and the next most distinctive thing vs Xcode's scheme editor.
+  { icon: Stethoscope, key: "diagnostics", span: "sm" },
   // Row 2: large + small = 3
   { icon: Camera, key: "screenshot", shot: "capture", span: "lg" },
   { icon: Bell, key: "push", span: "sm" },

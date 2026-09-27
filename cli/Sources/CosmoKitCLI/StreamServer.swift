@@ -3,7 +3,24 @@ import Network
 import CoreGraphics
 import ImageIO
 
+public protocol DriverClientType {
+    func status(device: String?) -> DriverStatusPayload
+    func call(_ path: String, method: String, json: [String: Any]?) throws -> Data
+}
+
+public struct DefaultDriverClient: DriverClientType {
+    public init() {}
+    public func status(device: String?) -> DriverStatusPayload {
+        Driver.status(device: device)
+    }
+    public func call(_ path: String, method: String, json: [String: Any]?) throws -> Data {
+        try Driver.call(path, method: method, json: json)
+    }
+}
+
 public final class StreamServer {
+    public static var driverClient: DriverClientType = DefaultDriverClient()
+
     public let port: Int
     public let token: String
     public let device: Device
@@ -94,7 +111,7 @@ public final class StreamServer {
         let endpoint = NWEndpoint.Port(rawValue: UInt16(port))!
         let params = NWParameters.tcp
         params.requiredLocalEndpoint = NWEndpoint.hostPort(host: "127.0.0.1", port: endpoint)
-        let listener = try NWListener(using: params, on: endpoint)
+        let listener = try NWListener(using: params)
         self.listener = listener
 
         listener.stateUpdateHandler = { [weak self] state in
@@ -189,6 +206,17 @@ public final class StreamServer {
         return frame
     }
 
+    public func triggerImmediateFrameCapture() {
+        queue.async { [weak self] in
+            guard let self else { return }
+            if let frame = self.captureFrame() {
+                self.frameLock.lock()
+                self.latestFrameData = frame
+                self.frameLock.unlock()
+            }
+        }
+    }
+
     private func scaleImage(data: Data, factor: Double) -> Data {
         guard factor < 1.0, factor > 0,
               let source = CGImageSourceCreateWithData(data as CFData, nil),
@@ -268,7 +296,8 @@ public final class StreamServer {
                 worktree: self.worktree,
                 app: self.appBundleID,
                 frameProvider: { self.getLatestFrame() },
-                scale: self.scale
+                scale: self.scale,
+                onPostAct: { [weak self] in self?.triggerImmediateFrameCapture() }
             )
 
             self.sendResponse(connection: connection, status: response.statusCode, headers: response.headers, body: response.body)
@@ -336,7 +365,8 @@ public final class StreamServer {
                                       worktree: String? = nil,
                                       app: String? = nil,
                                       frameProvider: () -> Data? = { nil },
-                                      scale: Double = 0.5) -> (statusCode: Int, headers: [String: String], body: Data) {
+                                      scale: Double = 0.5,
+                                      onPostAct: () -> Void = {}) -> (statusCode: Int, headers: [String: String], body: Data) {
         let prefix = "/s/\(token)"
         guard uri.hasPrefix(prefix) else {
             return (404, ["Content-Type": "text/plain"], Data("Not Found\n".utf8))
@@ -358,16 +388,106 @@ public final class StreamServer {
             return (404, ["Content-Type": "text/plain"], Data("No frame available\n".utf8))
 
         case ("GET", "/tree"):
-            let driverStatus = Driver.status(device: udid)
+            let driverStatus = driverClient.status(device: udid)
             if !driverStatus.running {
                 let err = "{\"ok\":false,\"error\":{\"code\":\"driverUnavailable\",\"message\":\"Driver is not running. Start it with: cosmokit agent start\"}}"
                 return (200, ["Content-Type": "application/json"], Data(err.utf8))
             }
-            if let data = try? Driver.call("/tree?mode=debug") {
+            if let data = try? driverClient.call("/tree", method: "GET", json: nil) {
                 return (200, ["Content-Type": "application/json"], data)
             }
             let err = "{\"ok\":false,\"error\":{\"code\":\"driverUnavailable\",\"message\":\"Driver unavailable\"}}"
             return (200, ["Content-Type": "application/json"], Data(err.utf8))
+
+        case ("POST", "/act"):
+            let driverStatus = driverClient.status(device: udid)
+            if !driverStatus.running {
+                let err = "{\"ok\":false,\"error\":{\"code\":\"driverUnavailable\",\"message\":\"Driver is not running. Start it with: cosmokit agent start\"}}"
+                return (200, ["Content-Type": "application/json"], Data(err.utf8))
+            }
+
+            guard let body,
+                  let json = try? JSONSerialization.jsonObject(with: body) as? [String: Any],
+                  let action = json["action"] as? String else {
+                return (400, ["Content-Type": "application/json"], Data("{\"ok\":false,\"error\":{\"code\":\"badAction\",\"message\":\"Missing action\"}}".utf8))
+            }
+
+            switch action {
+            case "tap":
+                guard let pageX = (json["x"] as? Double) ?? (json["x"] as? Int).map(Double.init),
+                      let pageY = (json["y"] as? Double) ?? (json["y"] as? Int).map(Double.init) else {
+                    return (400, ["Content-Type": "application/json"], Data("{\"ok\":false,\"error\":{\"code\":\"badAction\",\"message\":\"tap requires x and y coordinates\"}}".utf8))
+                }
+                let ptX = pageX / max(0.1, scale)
+                let ptY = pageY / max(0.1, scale)
+                do {
+                    _ = try driverClient.call("/tap", method: "POST", json: ["x": ptX, "y": ptY])
+                    onPostAct()
+                    return (200, ["Content-Type": "application/json"], Data("{\"ok\":true}".utf8))
+                } catch {
+                    return (500, ["Content-Type": "application/json"], Data("{\"ok\":false,\"error\":{\"code\":\"driverError\",\"message\":\"\(error.localizedDescription)\"}}".utf8))
+                }
+
+            case "swipe":
+                guard let pageX1 = (json["x1"] as? Double) ?? (json["x1"] as? Int).map(Double.init),
+                      let pageY1 = (json["y1"] as? Double) ?? (json["y1"] as? Int).map(Double.init),
+                      let pageX2 = (json["x2"] as? Double) ?? (json["x2"] as? Int).map(Double.init),
+                      let pageY2 = (json["y2"] as? Double) ?? (json["y2"] as? Int).map(Double.init) else {
+                    return (400, ["Content-Type": "application/json"], Data("{\"ok\":false,\"error\":{\"code\":\"badAction\",\"message\":\"swipe requires x1, y1, x2, and y2 coordinates\"}}".utf8))
+                }
+                let ptX1 = pageX1 / max(0.1, scale)
+                let ptY1 = pageY1 / max(0.1, scale)
+                let ptX2 = pageX2 / max(0.1, scale)
+                let ptY2 = pageY2 / max(0.1, scale)
+                var swipeJson: [String: Any] = [
+                    "x1": ptX1, "y1": ptY1,
+                    "x2": ptX2, "y2": ptY2,
+                    "from": ["x": ptX1, "y": ptY1],
+                    "to": ["x": ptX2, "y": ptY2]
+                ]
+                if let duration = (json["duration"] as? Double) ?? (json["duration"] as? Int).map(Double.init) {
+                    swipeJson["duration"] = duration
+                }
+                do {
+                    _ = try driverClient.call("/swipe", method: "POST", json: swipeJson)
+                    onPostAct()
+                    return (200, ["Content-Type": "application/json"], Data("{\"ok\":true}".utf8))
+                } catch {
+                    return (500, ["Content-Type": "application/json"], Data("{\"ok\":false,\"error\":{\"code\":\"driverError\",\"message\":\"\(error.localizedDescription)\"}}".utf8))
+                }
+
+            case "type":
+                guard let text = json["text"] as? String else {
+                    return (400, ["Content-Type": "application/json"], Data("{\"ok\":false,\"error\":{\"code\":\"badAction\",\"message\":\"type requires text\"}}".utf8))
+                }
+                let capped = String(text.prefix(2000))
+                do {
+                    _ = try driverClient.call("/type", method: "POST", json: ["text": capped])
+                    onPostAct()
+                    return (200, ["Content-Type": "application/json"], Data("{\"ok\":true}".utf8))
+                } catch {
+                    return (500, ["Content-Type": "application/json"], Data("{\"ok\":false,\"error\":{\"code\":\"driverError\",\"message\":\"\(error.localizedDescription)\"}}".utf8))
+                }
+
+            case "button":
+                guard let name = json["name"] as? String else {
+                    return (400, ["Content-Type": "application/json"], Data("{\"ok\":false,\"error\":{\"code\":\"badAction\",\"message\":\"button requires name\"}}".utf8))
+                }
+                let allowed: Set<String> = ["home", "lock", "siri", "volumeUp", "volumeDown", "volume-up", "volume-down"]
+                guard allowed.contains(name) else {
+                    return (400, ["Content-Type": "application/json"], Data("{\"ok\":false,\"error\":{\"code\":\"badAction\",\"message\":\"Invalid button name: \(name)\"}}".utf8))
+                }
+                do {
+                    _ = try driverClient.call("/button", method: "POST", json: ["name": name])
+                    onPostAct()
+                    return (200, ["Content-Type": "application/json"], Data("{\"ok\":true}".utf8))
+                } catch {
+                    return (500, ["Content-Type": "application/json"], Data("{\"ok\":false,\"error\":{\"code\":\"driverError\",\"message\":\"\(error.localizedDescription)\"}}".utf8))
+                }
+
+            default:
+                return (400, ["Content-Type": "application/json"], Data("{\"ok\":false,\"error\":{\"code\":\"badAction\",\"message\":\"Unknown action: \(action)\"}}".utf8))
+            }
 
         case ("POST", "/feedback"):
             guard let body,
@@ -387,7 +507,7 @@ public final class StreamServer {
 
             // Resolve element from fresh debug tree
             var element = FeedbackElementPayload(ref: 0, type: "View", label: nil, identifier: nil, frame: nil)
-            if let treeData = try? Driver.call("/tree?mode=debug"),
+            if let treeData = try? driverClient.call("/tree", method: "GET", json: nil),
                let snapshot = try? UITree.parse(treeData) {
                 // Determine scale between raw screenshot points and tree frame points if needed
                 if let resolved = FeedbackStore.resolveElement(in: snapshot, x: ptX, y: ptY) ?? FeedbackStore.resolveElement(in: snapshot, x: pageX, y: pageY) {
@@ -453,6 +573,31 @@ public final class StreamServer {
                 }
                 Thread.sleep(forTimeInterval: 0.25)
             }
+
+        case ("GET", "/feedback/prompt"):
+            var seq: Int? = nil
+            var scope = "unacked"
+            for param in query.components(separatedBy: "&") {
+                let pair = param.components(separatedBy: "=")
+                if pair.count == 2 {
+                    if pair[0] == "seq", let val = Int(pair[1]) { seq = val }
+                    if pair[0] == "scope" { scope = pair[1] }
+                }
+            }
+            let records = FeedbackStore.readAll(udid: udid)
+            let selectedRecords: [FeedbackRecordPayload]
+            if let seq = seq {
+                guard let target = records.first(where: { $0.seq == seq }) else {
+                    return (404, ["Content-Type": "text/plain; charset=utf-8"], Data("no feedback record with seq #\(seq)\n".utf8))
+                }
+                selectedRecords = [target]
+            } else if scope == "all" {
+                selectedRecords = records
+            } else {
+                selectedRecords = records.filter { ($0.acked ?? false) == false }
+            }
+            let text = FeedbackPrompt.render(selectedRecords, app: app)
+            return (200, ["Content-Type": "text/plain; charset=utf-8"], Data(text.utf8))
 
         default:
             // Check for /feedback/<seq>/ack
@@ -544,9 +689,32 @@ public final class StreamServer {
     align-items: center;
     font-size: 13px;
   }
-  .header-left { display: flex; gap: 16px; align-items: center; }
-  .badge { background: #21262d; border: 1px solid var(--border); border-radius: 4px; padding: 2px 8px; font-weight: 600; }
+  .header-left { display: flex; gap: 12px; align-items: center; }
+  .badge { background: #21262d; border: 1px solid var(--border); border-radius: 4px; padding: 2px 8px; font-weight: 600; font-size: 12px; }
   .badge.device { color: var(--accent); }
+  .mode-toggle {
+    display: flex;
+    background: #0d1117;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 2px;
+    gap: 2px;
+  }
+  .mode-btn {
+    padding: 4px 14px;
+    background: transparent;
+    border: none;
+    border-radius: 4px;
+    color: var(--text-dim);
+    font-weight: 600;
+    cursor: pointer;
+    font-size: 12px;
+    transition: all 0.15s ease;
+  }
+  .mode-btn.active {
+    background: var(--accent);
+    color: #fff;
+  }
   .main-container {
     display: flex;
     flex: 1;
@@ -562,6 +730,25 @@ public final class StreamServer {
     position: relative;
     background: #010409;
   }
+  .act-status {
+    position: absolute;
+    top: 20px;
+    background: rgba(22, 27, 34, 0.95);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 6px 16px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-family: ui-monospace, SFMono-Regular, monospace;
+    pointer-events: none;
+    z-index: 100;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+    transition: opacity 0.2s ease-in-out;
+  }
+  .act-status.error {
+    border-color: var(--red);
+    color: var(--red);
+  }
   .frame-wrapper {
     position: relative;
     display: inline-block;
@@ -569,12 +756,19 @@ public final class StreamServer {
     box-shadow: 0 8px 24px rgba(0,0,0,0.5);
     border-radius: 8px;
     overflow: hidden;
+    user-select: none;
+  }
+  .frame-wrapper:focus {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
   }
   #streamFrame {
     display: block;
     max-height: calc(100vh - 120px);
     max-width: 100%;
     object-fit: contain;
+    user-select: none;
+    -webkit-user-drag: none;
   }
   .crosshair {
     position: absolute;
@@ -586,9 +780,20 @@ public final class StreamServer {
     pointer-events: none;
     display: none;
     box-shadow: 0 0 8px rgba(88, 166, 255, 0.8);
+    z-index: 10;
+  }
+  .drag-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    display: none;
+    z-index: 20;
   }
   .side-panel {
-    width: 400px;
+    width: 380px;
     background: var(--card);
     border-left: 1px solid var(--border);
     display: flex;
@@ -662,6 +867,31 @@ public final class StreamServer {
     font-size: 13px;
   }
   button.submit-btn:hover { background: #2ea043; }
+  .hw-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 4px;
+  }
+  .hw-btn {
+    flex: 1 1 calc(33.3% - 8px);
+    background: #21262d;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 8px 6px;
+    color: var(--text);
+    font-weight: 600;
+    font-size: 12px;
+    cursor: pointer;
+    text-align: center;
+    transition: background 0.1s;
+  }
+  .hw-btn:hover { background: #30363d; }
+  .control-hints {
+    font-size: 12px;
+    color: var(--text-dim);
+    line-height: 1.6;
+  }
   .comment-list {
     display: flex;
     flex-direction: column;
@@ -691,6 +921,19 @@ public final class StreamServer {
     border: 1px solid var(--border);
   }
   .comment-ack.acked { color: var(--green); border-color: var(--green); }
+  .copy-btn {
+    background: #21262d;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 2px 8px;
+    color: var(--text);
+    font-size: 11px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.15s ease, color 0.15s ease;
+  }
+  .copy-btn:hover { background: #30363d; }
+  .copy-btn.copied { color: var(--green); border-color: var(--green); }
   pre#treeOutput {
     font-family: ui-monospace, SFMono-Regular, monospace;
     font-size: 11px;
@@ -708,6 +951,10 @@ public final class StreamServer {
       \#(app != nil ? "<span class=\"badge\">App: " + app! + "</span>" : "")
       \#(branch != nil ? "<span class=\"badge\">Git: " + branch! + "</span>" : "")
     </div>
+    <div class="mode-toggle">
+      <button class="mode-btn active" id="btnFeedbackMode" onclick="setMode('feedback')">Feedback</button>
+      <button class="mode-btn" id="btnControlMode" onclick="setMode('control')">Control</button>
+    </div>
     <div class="header-right">
       <span style="color:var(--text-dim); font-size:12px;">127.0.0.1:\#(token)</span>
     </div>
@@ -715,16 +962,42 @@ public final class StreamServer {
 
   <div class="main-container">
     <div class="stream-panel">
-      <div class="frame-wrapper" id="frameWrapper">
+      <div class="act-status" id="actStatus" style="display:none;"></div>
+      <div class="frame-wrapper" id="frameWrapper" tabindex="0">
         <img id="streamFrame" src="/s/\#(token)/stream.mjpeg" alt="Simulator Frame" onerror="this.src='/s/\#(token)/frame.png'">
         <div class="crosshair" id="crosshair"></div>
+        <svg class="drag-overlay" id="dragOverlay">
+          <line id="dragLine" x1="0" y1="0" x2="0" y2="0" stroke="#58a6ff" stroke-width="2" stroke-linecap="round" stroke-dasharray="4 2" />
+        </svg>
       </div>
     </div>
 
     <div class="side-panel">
-      <div class="tabs">
-        <button class="tab-btn active" onclick="showTab('feedback')">Feedback</button>
-        <button class="tab-btn" onclick="showTab('tree')">UI Tree</button>
+      <div class="tabs" id="tabsBar">
+        <button class="tab-btn active" id="tabMainBtn" onclick="showTab('main')">Feedback</button>
+        <button class="tab-btn" id="tabTreeBtn" onclick="showTab('tree')">UI Tree</button>
+      </div>
+
+      <div class="panel-content" id="controlBox" style="display:none;">
+        <div class="feedback-box">
+          <div style="font-weight:600; font-size:12px;">Hardware Buttons</div>
+          <div class="hw-buttons">
+            <button class="hw-btn" onclick="sendButton('home')">Home</button>
+            <button class="hw-btn" onclick="sendButton('lock')">Lock</button>
+            <button class="hw-btn" onclick="sendButton('volume-up')">Vol +</button>
+            <button class="hw-btn" onclick="sendButton('volume-down')">Vol −</button>
+            <button class="hw-btn" onclick="sendButton('siri')">Siri</button>
+          </div>
+        </div>
+        <div class="feedback-box">
+          <div style="font-weight:600; font-size:12px;">Interactions</div>
+          <div class="control-hints">
+            <div>• <strong>Click</strong> to tap</div>
+            <div>• <strong>Drag (&gt;12px)</strong> to swipe</div>
+            <div>• <strong>Focus &amp; Type</strong> to send keystrokes</div>
+            <div>• <strong>Enter</strong> sends Return (\n)</div>
+          </div>
+        </div>
       </div>
 
       <div class="panel-content" id="feedbackTab">
@@ -735,7 +1008,10 @@ public final class StreamServer {
           <button class="submit-btn" id="sendBtn" onclick="submitFeedback()">Send to agent</button>
         </div>
 
-        <div style="font-weight:600; font-size:12px; margin-top:8px;">Recent Comments</div>
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-top:8px;">
+          <span style="font-weight:600; font-size:12px;">Recent Comments</span>
+          <button class="copy-btn" id="copyAllUnackedBtn" onclick="copyPrompt('unacked', this)">Copy all unacked</button>
+        </div>
         <div class="comment-list" id="commentList"></div>
       </div>
 
@@ -748,37 +1024,204 @@ public final class StreamServer {
 
   <script>
     const token = "\#(token)";
+    let currentMode = "feedback";
     let selectedPoint = { x: 0, y: 0 };
     let highestSeq = 0;
+
+    let isMouseDown = false;
+    let dragStartX = 0, dragStartY = 0;
+    let dragStartPageX = 0, dragStartPageY = 0;
+    let typeBuffer = "";
+    let typeTimer = null;
+    let actStatusTimer = null;
 
     const frameWrapper = document.getElementById("frameWrapper");
     const streamFrame = document.getElementById("streamFrame");
     const crosshair = document.getElementById("crosshair");
     const selectedElementDiv = document.getElementById("selectedElement");
     const commentListDiv = document.getElementById("commentList");
+    const actStatusDiv = document.getElementById("actStatus");
 
-    streamFrame.addEventListener("click", (e) => {
+    function setMode(mode) {
+      currentMode = mode;
+      document.getElementById("btnFeedbackMode").classList.toggle("active", mode === "feedback");
+      document.getElementById("btnControlMode").classList.toggle("active", mode === "control");
+      document.getElementById("tabMainBtn").textContent = mode === "control" ? "Controls" : "Feedback";
+
+      if (mode === "control") {
+        frameWrapper.style.cursor = "pointer";
+        crosshair.style.display = "none";
+        document.getElementById("feedbackTab").style.display = "none";
+        document.getElementById("controlBox").style.display = "flex";
+        document.getElementById("treeTab").style.display = "none";
+        document.getElementById("tabMainBtn").classList.add("active");
+        document.getElementById("tabTreeBtn").classList.remove("active");
+        frameWrapper.focus();
+        showStatus("Control mode active");
+      } else {
+        frameWrapper.style.cursor = "crosshair";
+        document.getElementById("controlBox").style.display = "none";
+        document.getElementById("feedbackTab").style.display = "flex";
+        document.getElementById("treeTab").style.display = "none";
+        document.getElementById("tabMainBtn").classList.add("active");
+        document.getElementById("tabTreeBtn").classList.remove("active");
+        document.getElementById("dragOverlay").style.display = "none";
+      }
+    }
+
+    function showStatus(msg, isError = false) {
+      actStatusDiv.textContent = msg;
+      actStatusDiv.className = isError ? "act-status error" : "act-status";
+      actStatusDiv.style.display = "block";
+      clearTimeout(actStatusTimer);
+      actStatusTimer = setTimeout(() => {
+        actStatusDiv.style.display = "none";
+      }, 2000);
+    }
+
+    function getCoords(e) {
       const rect = streamFrame.getBoundingClientRect();
       const clientX = e.clientX - rect.left;
       const clientY = e.clientY - rect.top;
-
-      // Natural vs rendered ratio
       const naturalW = streamFrame.naturalWidth || rect.width;
       const naturalH = streamFrame.naturalHeight || rect.height;
       const scaleX = naturalW / rect.width;
       const scaleY = naturalH / rect.height;
+      return {
+        localX: clientX,
+        localY: clientY,
+        pageX: clientX * scaleX,
+        pageY: clientY * scaleY
+      };
+    }
 
-      const pageX = clientX * scaleX;
-      const pageY = clientY * scaleY;
-      selectedPoint = { x: pageX, y: pageY };
+    async function sendAct(payload) {
+      try {
+        const res = await fetch(`/s/${token}/act`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+        if (res.ok && data.ok) {
+          if (payload.action === "tap") {
+            showStatus(`Tap (${Math.round(payload.x)}, ${Math.round(payload.y)}) ✓`);
+          } else if (payload.action === "swipe") {
+            showStatus("Swipe ✓");
+          } else if (payload.action === "type") {
+            showStatus(`Type "${payload.text.replace(/\n/g, "\\n")}" ✓`);
+          } else if (payload.action === "button") {
+            showStatus(`Button ${payload.name} ✓`);
+          } else {
+            showStatus("Action ✓");
+          }
+        } else {
+          const code = (data.error && data.error.code) || "error";
+          showStatus(`${payload.action} failed: ${code}`, true);
+        }
+      } catch (err) {
+        showStatus(`${payload.action} failed: network error`, true);
+      }
+    }
 
-      crosshair.style.left = clientX + "px";
-      crosshair.style.top = clientY + "px";
+    async function sendButton(name) {
+      await sendAct({ action: "button", name: name });
+    }
+
+    // Feedback click handler
+    streamFrame.addEventListener("click", (e) => {
+      if (currentMode !== "feedback") return;
+      const coords = getCoords(e);
+      selectedPoint = { x: coords.pageX, y: coords.pageY };
+
+      crosshair.style.left = coords.localX + "px";
+      crosshair.style.top = coords.localY + "px";
       crosshair.style.display = "block";
 
-      selectedElementDiv.textContent = `Point: (${Math.round(pageX)}, ${Math.round(pageY)}) — Type comment below`;
+      selectedElementDiv.textContent = `Point: (${Math.round(coords.pageX)}, ${Math.round(coords.pageY)}) — Type comment below`;
       document.getElementById("commentText").focus();
     });
+
+    // Control mousedown/mousemove/mouseup for tap & swipe
+    streamFrame.addEventListener("mousedown", (e) => {
+      if (currentMode !== "control") return;
+      e.preventDefault();
+      frameWrapper.focus();
+      isMouseDown = true;
+      const coords = getCoords(e);
+      dragStartX = coords.localX;
+      dragStartY = coords.localY;
+      dragStartPageX = coords.pageX;
+      dragStartPageY = coords.pageY;
+    });
+
+    window.addEventListener("mousemove", (e) => {
+      if (currentMode !== "control" || !isMouseDown) return;
+      const rect = streamFrame.getBoundingClientRect();
+      const currX = e.clientX - rect.left;
+      const currY = e.clientY - rect.top;
+      const dist = Math.hypot(currX - dragStartX, currY - dragStartY);
+      const overlay = document.getElementById("dragOverlay");
+      const line = document.getElementById("dragLine");
+      if (dist > 12) {
+        overlay.style.display = "block";
+        line.setAttribute("x1", dragStartX);
+        line.setAttribute("y1", dragStartY);
+        line.setAttribute("x2", currX);
+        line.setAttribute("y2", currY);
+      } else {
+        overlay.style.display = "none";
+      }
+    });
+
+    window.addEventListener("mouseup", (e) => {
+      if (currentMode !== "control" || !isMouseDown) return;
+      isMouseDown = false;
+      document.getElementById("dragOverlay").style.display = "none";
+      const coords = getCoords(e);
+      const dist = Math.hypot(coords.localX - dragStartX, coords.localY - dragStartY);
+      if (dist > 12) {
+        sendAct({
+          action: "swipe",
+          x1: dragStartPageX,
+          y1: dragStartPageY,
+          x2: coords.pageX,
+          y2: coords.pageY
+        });
+      } else {
+        sendAct({
+          action: "tap",
+          x: coords.pageX,
+          y: coords.pageY
+        });
+      }
+    });
+
+    // Keydown debounced typing in Control mode
+    frameWrapper.addEventListener("keydown", (e) => {
+      if (currentMode !== "control") return;
+      if (e.key === "Enter") {
+        e.preventDefault();
+        typeBuffer += "\n";
+        resetTypeTimer();
+      } else if (e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey) {
+        e.preventDefault();
+        typeBuffer += e.key;
+        resetTypeTimer();
+      }
+      // Note: Backspace is not supported by driver /type and is ignored.
+    });
+
+    function resetTypeTimer() {
+      clearTimeout(typeTimer);
+      typeTimer = setTimeout(() => {
+        if (typeBuffer.length > 0) {
+          const text = typeBuffer;
+          typeBuffer = "";
+          sendAct({ action: "type", text: text });
+        }
+      }, 300);
+    }
 
     async function submitFeedback() {
       const text = document.getElementById("commentText").value.trim();
@@ -835,9 +1278,12 @@ public final class StreamServer {
       card.innerHTML = `
         <div class="comment-header">
           <span>#${rec.seq} • ${elemDesc}</span>
-          <span class="${rec.acked ? 'comment-ack acked' : 'comment-ack'}" id="ack-${rec.seq}" onclick="toggleAck(${rec.seq})">
-            ${rec.acked ? '✓ Answered' : 'Pending'}
-          </span>
+          <div style="display:flex; gap:6px; align-items:center;">
+            <button class="copy-btn" onclick="copyPrompt(${rec.seq}, this)">Copy prompt</button>
+            <span class="${rec.acked ? 'comment-ack acked' : 'comment-ack'}" id="ack-${rec.seq}" onclick="toggleAck(${rec.seq})">
+              ${rec.acked ? '✓ Answered' : 'Pending'}
+            </span>
+          </div>
         </div>
         <div style="font-weight:500;">${rec.text}</div>
       `;
@@ -876,11 +1322,59 @@ public final class StreamServer {
     }
 
     function showTab(tab) {
-      document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
-      document.getElementById("feedbackTab").style.display = tab === "feedback" ? "flex" : "none";
-      document.getElementById("treeTab").style.display = tab === "tree" ? "flex" : "none";
-      event.target.classList.add("active");
-      if (tab === "tree") refreshTree();
+      document.getElementById("tabMainBtn").classList.toggle("active", tab === "main");
+      document.getElementById("tabTreeBtn").classList.toggle("active", tab === "tree");
+      if (tab === "tree") {
+        document.getElementById("feedbackTab").style.display = "none";
+        document.getElementById("controlBox").style.display = "none";
+        document.getElementById("treeTab").style.display = "flex";
+        refreshTree();
+      } else {
+        document.getElementById("treeTab").style.display = "none";
+        if (currentMode === "control") {
+          document.getElementById("controlBox").style.display = "flex";
+          document.getElementById("feedbackTab").style.display = "none";
+        } else {
+          document.getElementById("feedbackTab").style.display = "flex";
+          document.getElementById("controlBox").style.display = "none";
+      }
+    }
+
+    async function copyToClipboard(text) {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        return await navigator.clipboard.writeText(text);
+      }
+      const ta = document.createElement("textarea");
+      ta.value = text;
+      ta.style.position = "fixed";
+      ta.style.left = "-9999px";
+      ta.style.top = "-9999px";
+      document.body.appendChild(ta);
+      ta.focus();
+      ta.select();
+      document.execCommand("copy");
+      document.body.removeChild(ta);
+    }
+
+    async function copyPrompt(target, btn) {
+      const originalText = btn.textContent;
+      const url = typeof target === "number"
+        ? `/s/${token}/feedback/prompt?seq=${target}`
+        : `/s/${token}/feedback/prompt?scope=${target}`;
+      try {
+        const res = await fetch(url);
+        if (!res.ok) throw new Error("Failed to fetch prompt");
+        const text = await res.text();
+        await copyToClipboard(text);
+        btn.textContent = "Copied!";
+        btn.classList.add("copied");
+        setTimeout(() => {
+          btn.textContent = originalText;
+          btn.classList.remove("copied");
+        }, 1500);
+      } catch (err) {
+        showStatus("Copy failed: " + err, true);
+      }
     }
 
     pollFeedback();

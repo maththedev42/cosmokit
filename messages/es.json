@@ -95,6 +95,10 @@
         "title": "Editor de UserDefaults",
         "description": "Lee los defaults de la app en vivo, cambia una flag, reescribe un array o borra una clave y reinicia la app desde el panel."
       },
+      "diagnostics": {
+        "title": "Diagnósticos de Scheme",
+        "description": "Zombies, Main Thread Checker, Core Data SQL logging y 8 diagnósticos más de Xcode — vinculados a un perfil, no a un scheme. Actívalos una vez, úsalos en cada lanzamiento."
+      },
       "presets": {
         "title": "Dev Presets",
         "description": "Restaura todo un entorno de trabajo en un clic, en lugar de rehacerlo a mano cada mañana."
