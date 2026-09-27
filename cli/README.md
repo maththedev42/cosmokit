@@ -14,8 +14,28 @@ the app to use it.
 
 ## Install
 
-Build from source. This is the recommended route, and the fastest one on a
-machine that already has Xcode:
+### Homebrew (recommended)
+
+```sh
+brew install maththedev42/tap/cosmokit
+```
+
+### Pre-built Universal Binary
+
+Download the universal binary archive from
+[Releases](https://github.com/maththedev42/cosmokit-cli/releases). Extract it into
+`/usr/local`:
+
+```sh
+sudo tar xzf cosmokit-0.4.0-macos-universal.tar.gz -C /usr/local
+xattr -d com.apple.quarantine /usr/local/bin/cosmokit
+```
+
+The driver sources under `share/cosmokit/Driver` must stay next to `bin/` because the driver is built by `xcodebuild` on first `agent start`.
+
+### Build from source
+
+On a machine that already has Xcode:
 
 ```sh
 git clone https://github.com/maththedev42/cosmokit-cli.git
@@ -24,16 +44,7 @@ swift build -c release
 cp .build/release/cosmokit /usr/local/bin/
 ```
 
-Or download the universal binary from
-[Releases](https://github.com/maththedev42/cosmokit-cli/releases). It is ad-hoc
-signed rather than notarized, so macOS quarantines it on download and you have
-to clear that yourself:
-
-```sh
-tar xzf cosmokit-0.4.0-macos-universal.tar.gz
-xattr -d com.apple.quarantine cosmokit
-mv cosmokit /usr/local/bin/
-```
+Running directly from a repository checkout (`swift run cosmokit` or from within the repository root) also works automatically because the CLI locates `Driver/` or `cli/Driver` in the current directory as a fallback.
 
 ## Commands
 
@@ -405,6 +416,9 @@ Claude Code's experimental push mode, start the session with
 then arrive as channel events while the session is open. The MCP server also
 keeps the polling fallback and sends stream feedback pins into the same
 thread. Chat text is data and is never executed as a command.
+
+> [!NOTE]
+> App requirements: `cosmokit throttle` and `cosmokit offline` require CosmoKit 4.8.0 or newer running on your Mac. The `chat_*` tools (`chat_read`, `chat_reply`, `chat_status`) require the CosmoKit update that ships the chat window (the next update). Until then, or if CosmoKit is not running, these tools return `appNotRunning` with a hint to open CosmoKit. All other 50+ CLI commands and MCP tools operate independently without needing the CosmoKit macOS app.
 
 ### Proxy boundary
 

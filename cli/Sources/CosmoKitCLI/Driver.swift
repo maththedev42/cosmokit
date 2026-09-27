@@ -28,16 +28,60 @@ public enum Driver {
         return URL(fileURLWithPath: NSHomeDirectory()).appendingPathComponent("Library/Caches/cosmokit/driver/\(version)-\(safe)")
     }
 
+    public static func driverSourceRoot(
+        environment: [String: String] = ProcessInfo.processInfo.environment,
+        executableURL: URL? = nil,
+        currentDirectory: URL? = nil
+    ) throws -> URL {
+        let exec = (executableURL ?? Bundle.main.executableURL ?? URL(fileURLWithPath: CommandLine.arguments.first ?? "")).resolvingSymlinksInPath()
+        let cwd = (currentDirectory ?? URL(fileURLWithPath: FileManager.default.currentDirectoryPath)).standardizedFileURL
+
+        var candidates: [URL] = []
+        var checkedPaths: [String] = []
+
+        // 1. $COSMOKIT_DRIVER_DIR (escape hatch, documented)
+        if let env = environment["COSMOKIT_DRIVER_DIR"], !env.isEmpty {
+            let envURL = URL(fileURLWithPath: env).standardizedFileURL
+            candidates.append(envURL)
+            checkedPaths.append("$COSMOKIT_DRIVER_DIR (\(envURL.path))")
+        } else {
+            checkedPaths.append("$COSMOKIT_DRIVER_DIR (not set)")
+        }
+
+        // 2. <executable dir>/../share/cosmokit/Driver
+        let shareURL = exec.deletingLastPathComponent().appendingPathComponent("../share/cosmokit/Driver").standardizedFileURL
+        candidates.append(shareURL)
+        checkedPaths.append(shareURL.path)
+
+        // 3. $CWD/Driver, then $CWD/cli/Driver
+        let cwdDriver = cwd.appendingPathComponent("Driver").standardizedFileURL
+        candidates.append(cwdDriver)
+        checkedPaths.append(cwdDriver.path)
+
+        let cwdCliDriver = cwd.appendingPathComponent("cli/Driver").standardizedFileURL
+        candidates.append(cwdCliDriver)
+        checkedPaths.append(cwdCliDriver.path)
+
+        for candidate in candidates {
+            let project = candidate.appendingPathComponent("CosmoKitAgentDriver.xcodeproj")
+            if FileManager.default.fileExists(atPath: project.path) {
+                return candidate
+            }
+        }
+
+        let tried = checkedPaths.joined(separator: ", ")
+        throw driverError("driver sources not found. Looked in: \(tried). reinstall cosmokit, or set COSMOKIT_DRIVER_DIR to a checkout's cli/Driver.")
+    }
+
     public static func ensureBuilt() throws {
         let cache = cacheDirectory; let xctestrun = try xctestrunFile(in: cache)
         if xctestrun != nil { return }
         try FileManager.default.createDirectory(at: cache, withIntermediateDirectories: true)
-        var root = URL(fileURLWithPath: FileManager.default.currentDirectoryPath).appendingPathComponent("Driver")
-        if !FileManager.default.fileExists(atPath: root.appendingPathComponent("CosmoKitAgentDriver.xcodeproj").path) {
-            root = URL(fileURLWithPath: FileManager.default.currentDirectoryPath).appendingPathComponent("cli/Driver")
-        }
+        let root = try driverSourceRoot()
+        fputs("Building driver from \(root.path)...\n", stderr)
         _ = try runProcessForTesting("/usr/bin/xcodebuild", ["build-for-testing", "-project", root.appendingPathComponent("CosmoKitAgentDriver.xcodeproj").path, "-scheme", "AgentDriver", "-destination", "generic/platform=iOS Simulator", "-derivedDataPath", cache.path])
     }
+
 
     public static func start(device: String?, port: Int = 8877) throws -> DriverStatusPayload {
         let deviceID = try resolveDevice(device)

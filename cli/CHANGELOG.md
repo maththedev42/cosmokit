@@ -8,6 +8,7 @@
 - Added `cosmokit throttle <preset|custom>` and `cosmokit offline <on|off>` via the app's loopback control server, plus `network_conditions` MCP tool (53 tools total).
 - Fixed driver targeting so `ui tree` and UI actions inspect the target app rather than the test host, supporting `--app <bundle>` and automatic persistence across driver restarts.
 - Added reproducible UI-tree size and timing benchmark (`cli/scripts/benchmark.sh` and `cli/BENCHMARK.md`), documenting a 93.0% output size reduction vs raw driver trees.
+- The release archive now ships the driver sources under `share/cosmokit/Driver`; the binary finds them next to itself, via `COSMOKIT_DRIVER_DIR`, or in a checkout.
 
 ## 0.3.0 — 2026-09-08
 
