@@ -4,7 +4,7 @@
 - macOS: 26.4
 - Xcode: Xcode 26.4.1 Build version 17E202
 - Simulator: iPhone 16 Pro (B5029438-33A9-47E0-ACA4-C7B790A12E64), iOS 26.4
-- CLI version: 0.4.0
+- CLI version: 0.4.1
 - Driver start: already running
 - Test app commit: 7d2e529575824b450cd1c5a2cb06d2b769bdf3ed
 - idb: installed
