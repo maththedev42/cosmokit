@@ -36,4 +36,26 @@ final class AgentToolsTests: XCTestCase {
         let content = try XCTUnwrap(((object["result"] as? [String: Any])?["content"] as? [[String: Any]]))
         XCTAssertTrue(content.contains { $0["type"] as? String == "image" && $0["mimeType"] as? String == "image/png" })
     }
+
+    func testEnsureTargetAppSkipsCallWhenSavedTargetMatches() throws {
+        var httpCalls: [String] = []
+        let origHttp = Driver.httpForTesting
+        defer { Driver.httpForTesting = origHttp }
+        Driver.httpForTesting = { method, url, _ in
+            httpCalls.append("\(method) \(url.path)")
+            return (Data("{\"ok\":true}".utf8), 200)
+        }
+
+        let testDevice = "test-device-\(UUID().uuidString)"
+        Driver.saveTargetApp("apps.test.app", for: testDevice)
+
+        // When saved target matches requested target, ensureTargetApp must NOT call /app
+        try Driver.ensureTargetApp("apps.test.app", device: testDevice)
+        XCTAssertEqual(httpCalls, [])
+
+        // When saved target differs, ensureTargetApp calls /app
+        try Driver.ensureTargetApp("apps.test.other", device: testDevice)
+        XCTAssertTrue(httpCalls.contains { $0.contains("/app") })
+        XCTAssertEqual(Driver.targetApp(for: testDevice), "apps.test.other")
+    }
 }
