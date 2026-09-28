@@ -17,6 +17,23 @@ final class AgentDriverTests: XCTestCase {
         XCTAssertTrue(response.contains("apps.mjkweber.CosmoKitAgentHost"))
     }
 
+    func testSnapshotFallbackWalkWhenSelectorUnavailable() {
+        Self.selectorCheckOverride = { _, selector in
+            if NSStringFromSelector(selector) == "elementSnapshotForDebugDescriptionWithNoMatchesMessage:" {
+                return false
+            }
+            return true
+        }
+        defer { Self.selectorCheckOverride = nil }
+
+        let result = snapshotElements(for: hostApp)
+        XCTAssertNil(result)
+
+        let treeJSON = tree(for: hostApp, bundleID: "apps.mjkweber.CosmoKitAgentHost")
+        XCTAssertTrue(treeJSON.contains("\"app\":\"apps.mjkweber.CosmoKitAgentHost\""))
+        XCTAssertTrue(treeJSON.contains("\"elements\":"))
+    }
+
     func testServe() {
         continueAfterFailure = true
         hostApp.launch()
@@ -302,20 +319,32 @@ final class AgentDriverTests: XCTestCase {
         return encoded(["app": bundleID, "elements": values, "truncated": false])
     }
 
+    static var selectorCheckOverride: ((AnyObject, Selector) -> Bool)? = nil
+
+    private func respondsToSelector(_ object: AnyObject, _ selector: Selector) -> Bool {
+        if let override = Self.selectorCheckOverride {
+            return override(object, selector)
+        }
+        return object.responds(to: selector)
+    }
+
     private func snapshotElements(for app: XCUIApplication) -> [[String: Any]]? {
         let querySel = NSSelectorFromString("query")
-        guard (app as AnyObject).responds(to: querySel),
+        guard respondsToSelector(app as AnyObject, querySel),
               let queryObj = (app as AnyObject).perform(querySel)?.takeUnretainedValue() else {
+            NSLog("snapshot selector unavailable, slow path")
             return nil
         }
         let debugSel = NSSelectorFromString("elementSnapshotForDebugDescriptionWithNoMatchesMessage:")
-        guard (queryObj as AnyObject).responds(to: debugSel),
+        guard respondsToSelector(queryObj as AnyObject, debugSel),
               let rootSnapshot = (queryObj as AnyObject).perform(debugSel, with: nil)?.takeUnretainedValue() as AnyObject? else {
+            NSLog("snapshot selector unavailable, slow path")
             return nil
         }
         let descendantsSel = NSSelectorFromString("_allDescendants")
-        guard rootSnapshot.responds(to: descendantsSel),
+        guard respondsToSelector(rootSnapshot, descendantsSel),
               let allDescendants = (rootSnapshot.perform(descendantsSel)?.takeUnretainedValue() as? [AnyObject]) else {
+            NSLog("snapshot selector unavailable, slow path")
             return nil
         }
         let allSnapshots: [AnyObject] = [rootSnapshot] + allDescendants

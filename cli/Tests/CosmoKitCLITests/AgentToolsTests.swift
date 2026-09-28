@@ -58,4 +58,20 @@ final class AgentToolsTests: XCTestCase {
         XCTAssertTrue(httpCalls.contains { $0.contains("/app") })
         XCTAssertEqual(Driver.targetApp(for: testDevice), "apps.test.other")
     }
+
+    func testSnapshotFallbackWalkWhenSelectorUnavailable() throws {
+        var httpCalls: [String] = []
+        let origHttp = Driver.httpForTesting
+        defer { Driver.httpForTesting = origHttp }
+        Driver.httpForTesting = { method, url, _ in
+            httpCalls.append("\(method) \(url.path)")
+            let fallbackJSON = """
+            {"app":"com.example.app","elements":[{"children":[],"enabled":true,"frame":{"height":100,"width":100,"x":0,"y":0},"id":"btn","label":"Click Me","placeholder":"","ref":1,"selected":false,"focused":true,"type":"button"}],"truncated":false}
+            """
+            return (Data(fallbackJSON.utf8), 200)
+        }
+        let outcome = try CLI.perform(command: "ui", args: ["tree", "--app", "com.example.app", "--mode", "act"], output: nil)
+        XCTAssertTrue(outcome.human.contains("Click Me"))
+        XCTAssertTrue(outcome.human.contains("screen:"))
+    }
 }
