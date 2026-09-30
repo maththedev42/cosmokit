@@ -122,8 +122,11 @@ export default function CliPage() {
               Or build from source
             </p>
             <pre className="overflow-x-auto rounded-lg bg-background/60 border border-border/40 p-3 text-xs font-mono text-violet-light">
-              <code>{`git clone https://github.com/maththedev42/cosmokit-cli.git\ncd cosmokit-cli\nswift build -c release\ncp .build/release/cosmokit /usr/local/bin/`}</code>
+              <code>{`git clone https://github.com/maththedev42/cosmokit-cli.git\ncd cosmokit-cli\nswift build -c release`}</code>
             </pre>
+            <p className="mt-3 text-xs text-muted-foreground leading-relaxed">
+              Run directly from the checkout (<code>swift run cosmokit</code> or <code>./.build/release/cosmokit</code>), or set <code>COSMOKIT_DRIVER_DIR</code> to the driver source directory if moving the binary (<code>cp</code> to <code>/usr/local/bin</code> alone no longer works for <code>agent start</code>).
+            </p>
           </div>
         </div>
       </section>
@@ -190,7 +193,7 @@ export default function CliPage() {
                 .
               </p>
               <p className="text-xs text-muted-foreground leading-relaxed">
-                Install the Claude Code skill with <code className="text-violet-light bg-violet-DEFAULT/10 px-1 py-0.5 rounded">cp -r skills/cosmokit-simulator ~/.claude/skills/</code> to give your agent native simulator steering. For Claude Code, Cursor, or any MCP client, add the <code className="text-violet-light bg-violet-DEFAULT/10 px-1 py-0.5 rounded">cosmokit mcp</code> server configuration from <code className="text-violet-light bg-violet-DEFAULT/10 px-1 py-0.5 rounded">examples/mcp.json</code> to expose all 52 simulator tools over stdio. Drop <code className="text-violet-light bg-violet-DEFAULT/10 px-1 py-0.5 rounded">examples/cursor-rule.mdc</code> into <code className="text-violet-light bg-violet-DEFAULT/10 px-1 py-0.5 rounded">.cursor/rules/</code> so Cursor automatically prefers fast UI tree inspection and batched actions when driving tests.
+                Install the Claude Code skill with <code className="text-violet-light bg-violet-DEFAULT/10 px-1 py-0.5 rounded">cp -r skills/cosmokit-simulator ~/.claude/skills/</code> to give your agent native simulator steering. For Claude Code, Cursor, or any MCP client, add the <code className="text-violet-light bg-violet-DEFAULT/10 px-1 py-0.5 rounded">cosmokit mcp</code> server configuration with <code className="text-violet-light bg-violet-DEFAULT/10 px-1 py-0.5 rounded">claude mcp add cosmokit -- cosmokit mcp</code> or from <code className="text-violet-light bg-violet-DEFAULT/10 px-1 py-0.5 rounded">examples/mcp.json</code> to expose all 56 simulator tools over stdio. Drop <code className="text-violet-light bg-violet-DEFAULT/10 px-1 py-0.5 rounded">examples/cursor-rule.mdc</code> into <code className="text-violet-light bg-violet-DEFAULT/10 px-1 py-0.5 rounded">.cursor/rules/</code> so Cursor automatically prefers fast UI tree inspection and batched actions when driving tests.
               </p>
             </div>
           </div>

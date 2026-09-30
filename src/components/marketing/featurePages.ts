@@ -36,11 +36,12 @@ export const FEATURE_PAGES: FeaturePageDef[] = [
       {
         title: "Compact screen summaries",
         subtitle: "Read the screen before you act",
-        body: "Ask the CLI for a compact tree instead of parsing a screenshot. Every interactive element has a stable reference and the snapshot carries a screen hash for safe follow-up actions.",
+        body: "Ask the CLI for a compact tree instead of parsing a screenshot. Every interactive element has a stable reference and the snapshot carries a screen hash for safe follow-up actions. In benchmarks (see cli/BENCHMARK.md), act mode cuts token payload by 92.7% vs raw driver JSON and 94.6% vs idb.",
         bullets: [
           "act lists interactive elements and stable refs for actions",
           "nav includes interactive elements plus useful navigation headings",
           "debug includes the full hierarchy and accessibility identifiers",
+          "Cuts token payload by 92.7% vs raw driver JSON and 94.6% vs idb in benchmarks",
           "Use --max on long screens to keep the response bounded",
         ],
         code: {
@@ -83,9 +84,10 @@ export const FEATURE_PAGES: FeaturePageDef[] = [
       {
         title: "Works with the tools you already use",
         subtitle: "Shell, MCP, Claude Code, Cursor, and Codex",
-        body: "Use the same simulator operations from a terminal or expose them to an MCP client over stdio. The cosmokit-simulator Agent Skill teaches Claude Code the tree, act, wait, and feedback loop; Cursor can use the included rule, and any MCP client can use the configuration snippet.",
+        body: "Use the same simulator operations from a terminal or expose them to an MCP client over stdio. The cosmokit-simulator Agent Skill teaches Claude Code the tree, act, wait, and feedback loop; Cursor can use the included rule, and any MCP client can use the configuration snippet. You can also simulate network latency with cosmokit throttle and test offline states with cosmokit offline (requires CosmoKit 4.8.0+).",
         bullets: [
-          "cosmokit mcp exposes 52 typed simulator tools over stdio",
+          "cosmokit mcp exposes 56 typed simulator tools over stdio",
+          "cosmokit throttle and cosmokit offline simulate network conditions (CosmoKit 4.8.0+)",
           "Install the Claude Code skill with cp -r skills/cosmokit-simulator ~/.claude/skills/",
           "Use cli/examples/cursor-rule.mdc for the same loop in Cursor",
           "Register cli/examples/mcp.json with any MCP client",

@@ -122,7 +122,7 @@
       },
       "ai": {
         "title": "Works with your AI agent",
-        "description": "Run cosmokit mcp and any MCP client, such as Claude Code or Cursor, discovers 52 simulator tools it can call with typed arguments: install and launch apps, capture screenshots and video, replay GPS routes, send push payloads, flip permissions, trust a debugging certificate, and read UserDefaults and logs. The agent can read the screen and tap (`ui tree` / `ui tap`) and you can watch in the browser. Every command also takes --json, so an agent that only runs shell still gets a structured result to parse instead of prose."
+        "description": "Run cosmokit mcp and any MCP client, such as Claude Code or Cursor, discovers 56 simulator tools it can call with typed arguments: install and launch apps, capture screenshots and video, replay GPS routes, send push payloads, flip permissions, trust a debugging certificate, and read UserDefaults and logs. The agent can read the screen and tap (`ui tree` / `ui tap`) and you can watch in the browser. Every command also takes --json, so an agent that only runs shell still gets a structured result to parse instead of prose."
       },
       "cli": {
         "title": "cosmokit CLI",
