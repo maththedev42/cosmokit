@@ -90,7 +90,7 @@ const FACTS = [
   "No account, no telemetry, no CosmoKit Pro required",
   "Shells out to xcrun simctl, so it works with the Xcode you already have",
   "Exits non-zero on failure, so it is safe under set -e",
-  "Does not require the CosmoKit app to be installed",
+  "Does not require the CosmoKit app for simulator commands (throttle, offline, and chat features require CosmoKit 4.9.0+)",
 ];
 
 export default function CliPage() {

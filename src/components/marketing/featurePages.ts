@@ -84,10 +84,10 @@ export const FEATURE_PAGES: FeaturePageDef[] = [
       {
         title: "Works with the tools you already use",
         subtitle: "Shell, MCP, Claude Code, Cursor, and Codex",
-        body: "Use the same simulator operations from a terminal or expose them to an MCP client over stdio. The cosmokit-simulator Agent Skill teaches Claude Code the tree, act, wait, and feedback loop; Cursor can use the included rule, and any MCP client can use the configuration snippet. You can also simulate network latency with cosmokit throttle and test offline states with cosmokit offline (requires CosmoKit 4.8.0+).",
+        body: "Use the same simulator operations from a terminal or expose them to an MCP client over stdio. The cosmokit-simulator Agent Skill teaches Claude Code the tree, act, wait, and feedback loop; Cursor can use the included rule, and any MCP client can use the configuration snippet. You can also simulate network latency with cosmokit throttle and test offline states with cosmokit offline (requires CosmoKit 4.9.0+).",
         bullets: [
           "cosmokit mcp exposes 56 typed simulator tools over stdio",
-          "cosmokit throttle and cosmokit offline simulate network conditions (CosmoKit 4.8.0+)",
+          "cosmokit throttle and cosmokit offline simulate network conditions (CosmoKit 4.9.0+)",
           "Install the Claude Code skill with cp -r skills/cosmokit-simulator ~/.claude/skills/",
           "Use cli/examples/cursor-rule.mdc for the same loop in Cursor",
           "Register cli/examples/mcp.json with any MCP client",
@@ -96,6 +96,23 @@ export const FEATURE_PAGES: FeaturePageDef[] = [
           lang: "json",
           content:
             '{\n  "mcpServers": {\n    "cosmokit": {\n      "command": "cosmokit",\n      "args": ["mcp"]\n    }\n  }\n}',
+        },
+      },
+      {
+        title: "Talk to your agent from CosmoKit",
+        subtitle: "The Agent window and cosmokit chat listen",
+        body: "Open the Agent window inside CosmoKit 4.9.0 to chat directly with your coding agent. Run cosmokit chat listen in your project directory: it automatically detects Claude Code, Codex, or Cursor, answers every message using your local agent login and usage, and shows live listening status, 'Read by agent' markers, and working indicators in the app.",
+        bullets: [
+          "In-app Agent window with live listening status, 'Read by agent' receipts, and working indicators",
+          "cosmokit chat listen answers messages automatically using your local Claude, Codex, or Cursor agent",
+          "Fast turnarounds (~5s with Claude; Codex and Cursor supported)",
+          "Read-only by default with simulator control tools; pass --allow-edits to permit file modifications",
+          "Any MCP client can also read and reply via chat_read and chat_reply tools",
+        ],
+        code: {
+          lang: "bash",
+          content:
+            "# Answer Agent window messages automatically with your installed agent\ncosmokit chat listen\n\n# Or choose an agent explicitly with edit permissions\ncosmokit chat listen --agent claude --allow-edits",
         },
       },
       {
@@ -460,22 +477,23 @@ export const FEATURE_PAGES: FeaturePageDef[] = [
     slug: "push-and-deep-links",
     title: "Push notifications and deep links in one click",
     subtitle:
-      "Send custom APNs push payloads, test Universal Links, and open custom URL schemes directly in the iOS Simulator without a backend.",
+      "Send custom APNs push payloads, test Universal Links, and open custom URL schemes directly in the iOS Simulator without a backend—plus real APNs push to connected iPhones in 4.9.0+.",
     metaTitle: "Push Notifications & Deep Links | CosmoKit for iOS Simulator",
     metaDescription:
-      "Send custom APNs payloads and open deep links or Universal Links in the iOS Simulator without a backend server or physical device.",
+      "Send custom APNs payloads to the iOS Simulator without a backend, open deep links, and deliver real APNs push notifications to connected iPhones in CosmoKit 4.9.0+.",
     cardBlurb:
       "Send push payloads and test URL schemes directly in the simulator without a backend.",
     blocks: [
       {
         title: "Push payload editor and simulated delivery",
         subtitle: "Test notification UI and badges without Apple Push Notification keys",
-        body: "Compose custom APNs JSON payloads and simulate delivery directly to any running simulator. Verify banner layouts, notification action buttons, badge counts, and payload data handling without provisioning certificates or setting up backend push services.",
+        body: "Compose custom APNs JSON payloads and simulate delivery directly to any running simulator without provisioning certificates or setting up backend push services. Starting in 4.9.0, CosmoKit can also deliver real APNs push notifications to a connected iPhone using your own .p8 key stored securely in your login keychain, with sandbox or production endpoints and nothing installed on the phone.",
         bullets: [
-          "Send custom APNs JSON payloads directly to the simulator",
-          "Test notification banners, alert titles, subtitles, and bodies",
-          "Verify badge counts, custom sounds, and background notification triggers",
-          "Zero backend servers, physical devices, or APNs certificates required",
+          "Send custom APNs JSON payloads directly to the simulator without backend servers",
+          "Deliver real APNs notifications to a connected iPhone in 4.9.0+ using your own .p8 key",
+          "Keychain-secured .p8 authentication with sandbox and production APNs endpoints",
+          "Test notification banners, alert titles, subtitles, badge counts, and action buttons",
+          "Zero code changes or companion apps installed on the physical device",
         ],
         image: {
           src: "/screenshots/store/en/push.webp",

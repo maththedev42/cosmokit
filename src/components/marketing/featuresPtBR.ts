@@ -55,11 +55,11 @@ const PT_BR: Record<string, LocalizedFeature> = {
     title: "Notificações push",
     tagline: "Dispare pushes de teste com um clique",
     description:
-      "Envie payloads de push totalmente personalizados para o simulador e teste deep links, badges e a interface de notificação, sem backend nem aparelho físico.",
+      "Envie payloads de push totalmente personalizados para o simulador ou notificações APNs reais para um iPhone conectado (4.9.0+), sem precisar de backend.",
     bullets: [
       "Payloads JSON personalizados",
+      "Push no simulador e APNs em aparelho real (4.9.0+)",
       "Teste toques em notificações e deep links",
-      "Sem servidor nem dispositivo",
       "Modelos reutilizáveis",
     ],
   },

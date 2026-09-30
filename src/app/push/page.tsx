@@ -4,7 +4,7 @@ import { FeaturePage } from "@/components/marketing/marketing";
 export const metadata: Metadata = {
   title: "Push Notifications Testing | CosmoKit",
   description:
-    "Send fully custom push notification payloads to the iOS Simulator to test deep links, badges and notification UI, without a backend or a physical device.",
+    "Send custom push payloads to the iOS Simulator without a backend, and deliver real APNs push notifications to a connected iPhone in CosmoKit 4.9.0+.",
   alternates: { canonical: "https://usecosmoskittool.com/push" },
 };
 

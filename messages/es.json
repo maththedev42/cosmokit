@@ -54,7 +54,7 @@
       },
       "push": {
         "title": "Notificaciones Push",
-        "description": "Lanza notificaciones de prueba, previsualiza cómo se renderizan en el dispositivo y valida payloads personalizados antes de publicar."
+        "description": "Lanza payloads APNs personalizados en el simulador o envía notificaciones push reales a un iPhone conectado (4.9.0+), sin necesidad de backend."
       },
       "deeplinks": {
         "title": "Deep Links",
@@ -260,7 +260,7 @@
       },
       "q7": {
         "question": "¿Funciona con dispositivos físicos?",
-        "answer": "Las herramientas de CosmoKit están hechas para el iOS Simulator. Desde la 4.6 también muestra un panel Devices de solo lectura con los iPhone y iPad emparejados con tu Mac, con modelo, versión de iOS y estado de conexión. La captura, el GPS, los push y el resto de herramientas siguen siendo solo del simulador."
+        "answer": "Las herramientas de CosmoKit están hechas para el iOS Simulator. Desde la 4.6 también muestra un panel Devices de solo lectura con los iPhone y iPad emparejados con tu Mac, con modelo, versión de iOS y estado de conexión. Desde la 4.9 CosmoKit envía notificaciones push reales a un iPhone conectado a través de APNs; la captura y el GPS siguen siendo solo del simulador."
       },
       "q8": {
         "question": "¿Cómo obtengo soporte?",

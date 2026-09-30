@@ -54,7 +54,7 @@
       },
       "push": {
         "title": "Push Payload Testing",
-        "description": "Queue test notifications, preview how they render on-device, and verify custom payload data before shipping."
+        "description": "Trigger custom APNs payloads in the simulator or send real push notifications to a connected iPhone (4.9.0+), with no backend required."
       },
       "deeplinks": {
         "title": "Deep Links",
@@ -260,7 +260,7 @@
       },
       "q7": {
         "question": "Does it work with physical devices?",
-        "answer": "CosmoKit's tools target the iOS Simulator. Since 4.6 it also shows a read-only Devices panel listing the iPhones and iPads paired with your Mac, with model, iOS version and connection state. Capture, GPS, push and the other tools remain simulator-only."
+        "answer": "CosmoKit's tools target the iOS Simulator. Since 4.6 it also shows a read-only Devices panel listing the iPhones and iPads paired with your Mac, with model, iOS version and connection state. Since 4.9 CosmoKit sends real push notifications to a connected iPhone through APNs; capture and GPS remain simulator-only."
       },
       "q8": {
         "question": "How do I get support?",

@@ -88,11 +88,11 @@ export const FEATURES: Feature[] = [
     title: "Push notifications",
     tagline: "Fire test pushes in one click",
     description:
-      "Send fully custom push notification payloads to the simulator to test deep links, badges and notification UI, without a backend or a physical device.",
+      "Send fully custom push notification payloads to the simulator or real APNs pushes to a connected iPhone (4.9.0+), without a backend server.",
     bullets: [
       "Custom JSON payloads",
+      "Simulator push and real-device APNs (4.9.0+)",
       "Test notification taps and deep links",
-      "No server or device required",
       "Reusable templates",
     ],
   },
