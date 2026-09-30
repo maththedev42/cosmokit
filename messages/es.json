@@ -38,6 +38,7 @@
     "title": "Todo lo que necesitas, {highlight}",
     "titleHighlight": "un panel",
     "subtitle": "Reemplaza decenas de comandos {command} con una interfaz intuitiva.",
+    "learnMore": "Saber más →",
     "items": {
       "screenshot": {
         "title": "Captura de Pantalla",
@@ -121,7 +122,7 @@
       },
       "ai": {
         "title": "Funciona con tu agente de IA",
-        "description": "Ejecuta cosmokit mcp y cualquier cliente MCP, como Claude Code o Cursor, descubre 35 herramientas de simulador para llamar con argumentos tipados: instalar y abrir apps, tomar capturas y grabar video, reproducir rutas de GPS, lanzar payloads de push, cambiar permisos, confiar en un certificado de depuración y leer UserDefaults y logs. Cada comando también acepta --json, así un agente que solo ejecuta shell recibe un resultado estructurado que puede interpretar, en vez de texto corrido."
+        "description": "Ejecuta cosmokit mcp y cualquier cliente MCP, como Claude Code o Cursor, descubre 52 herramientas de simulador para llamar con argumentos tipados: instalar y abrir apps, tomar capturas y grabar video, reproducir rutas de GPS, lanzar payloads de push, cambiar permisos, confiar en un certificado de depuración y leer UserDefaults y logs. El agente puede leer la pantalla y tocar (`ui tree` / `ui tap`) y puedes observar en el navegador. Cada comando también acepta --json, así un agente que solo ejecuta shell recibe un resultado estructurado que puede interpretar, en vez de texto corrido."
       },
       "cli": {
         "title": "CLI cosmokit",
@@ -277,6 +278,7 @@
     "terms": "Términos de Servicio",
     "macAppStore": "Mac App Store",
     "cli": "Herramienta de línea de comandos",
+    "allFeatures": "Todas las características",
     "copyright": "© {year} CosmoHQ. Todos los derechos reservados.",
     "builtWith": "Hecho con SwiftUI · macOS 14.7+"
   },

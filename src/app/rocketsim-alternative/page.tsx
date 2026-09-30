@@ -37,17 +37,19 @@ const PILLARS = [
 ];
 
 const FEATURES = [
-  "Simulator control without the terminal (boot, erase, appearance, permissions, Face ID)",
-  "Screenshots and video recording, with device frames and GIF export",
-  "App Store screenshot generator",
-  "Push notification testing",
-  "Deep link testing with saved links",
-  "GPS location and route simulation",
-  "MITM network proxy for simulator traffic",
-  "Multiple simulators side by side",
-  "Menu bar quick capture and a global capture shortcut",
-  "English, Spanish and Portuguese localization",
-  "Free tier to start, subscription or one-time lifetime purchase for Pro",
+  { text: "Simulator control without the terminal (boot, erase, appearance, permissions, Face ID)" },
+  { text: "Screenshots and video recording, with device frames and GIF export" },
+  { text: "App Store screenshot generator" },
+  { text: "Push notification testing" },
+  { text: "Deep link testing with saved links" },
+  { text: "GPS location and route simulation" },
+  { text: "MITM network proxy for simulator traffic", href: "/features/network-proxy/" },
+  { text: "Agent CLI, MCP server and Agent Skill (Claude Code, Cursor, Codex)", href: "/features/agentic-development/" },
+  { text: "Live browser stream with click-to-element feedback", href: "/features/agentic-development/" },
+  { text: "Multiple simulators side by side" },
+  { text: "Menu bar quick capture and a global capture shortcut" },
+  { text: "English, Spanish and Portuguese localization" },
+  { text: "Free tier to start, subscription or one-time lifetime purchase for Pro" },
 ];
 
 export default function RocketSimAlternativePage() {
@@ -81,9 +83,20 @@ export default function RocketSimAlternativePage() {
           </h2>
           <ul className="space-y-3">
             {FEATURES.map((feature) => (
-              <li key={feature} className="flex items-start gap-3 text-sm">
+              <li key={feature.text} className="flex items-start gap-3 text-sm">
                 <Check className="h-4 w-4 mt-0.5 shrink-0 text-violet-light" />
-                <span>{feature}</span>
+                <span>
+                  {feature.href ? (
+                    <Link
+                      href={feature.href}
+                      className="text-violet-light underline underline-offset-2"
+                    >
+                      {feature.text}
+                    </Link>
+                  ) : (
+                    feature.text
+                  )}
+                </span>
               </li>
             ))}
           </ul>

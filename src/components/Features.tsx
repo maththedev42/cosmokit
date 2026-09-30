@@ -2,6 +2,7 @@
 
 import { motion } from "framer-motion";
 import Image from "next/image";
+import Link from "next/link";
 import {
   Camera,
   Video,
@@ -27,6 +28,7 @@ import {
   Stethoscope,
 } from "lucide-react";
 import { type LucideIcon } from "lucide-react";
+import type { ReactNode } from "react";
 import { useLocale, useTranslations } from "@/lib/i18n";
 
 /**
@@ -49,45 +51,45 @@ interface FeatureDef {
   key: string;
   shot?: ShotSlot;
   span: "lg" | "sm";
+  href?: string;
 }
 
 const featureDefs: FeatureDef[] = [
   // Row 1: large (2 cols) + small (1 col) = 3. Profiles leads because it is
-  // the 4.6 headline and the thing every other tool now hangs off.
-  { icon: Layers, key: "profiles", shot: "profiles", span: "lg" },
-  { icon: Database, key: "userdefaults", span: "sm" },
+  { icon: Layers, key: "profiles", shot: "profiles", span: "lg", href: "/features/control-panel/" },
+  { icon: Database, key: "userdefaults", span: "sm", href: "/features/app-environment/" },
   // Diagnostics sits between profiles and capture — it is a profile feature
   // and the next most distinctive thing vs Xcode's scheme editor.
-  { icon: Stethoscope, key: "diagnostics", span: "sm" },
+  { icon: Stethoscope, key: "diagnostics", span: "sm", href: "/features/control-panel/" },
   // Row 2: large + small = 3
-  { icon: Camera, key: "screenshot", shot: "capture", span: "lg" },
-  { icon: Bell, key: "push", span: "sm" },
+  { icon: Camera, key: "screenshot", shot: "capture", span: "lg", href: "/features/screenshots-recordings/" },
+  { icon: Bell, key: "push", span: "sm", href: "/features/push-and-deep-links/" },
   // Row 3: large + small = 3. No shot: the store set covers stills and video in
   // one image, which is already on the capture card above, and the old
   // /screenshots/macos-11.png predates 4.6 and shows the retired tool strip.
-  { icon: Video, key: "video", span: "lg" },
-  { icon: Link2, key: "deeplinks", span: "sm" },
+  { icon: Video, key: "video", span: "lg", href: "/features/screenshots-recordings/" },
+  { icon: Link2, key: "deeplinks", span: "sm", href: "/features/push-and-deep-links/" },
   // Row 4: large + small = 3
-  { icon: Globe, key: "proxy", shot: "proxy", span: "lg" },
-  { icon: MapPin, key: "gps", span: "sm" },
+  { icon: Globe, key: "proxy", shot: "proxy", span: "lg", href: "/features/network-proxy/" },
+  { icon: MapPin, key: "gps", span: "sm", href: "/features/location/" },
   // Row 5: large + small = 3
-  { icon: PanelTop, key: "menubar", span: "lg" },
-  { icon: ImagePlus, key: "generator", span: "sm" },
+  { icon: PanelTop, key: "menubar", span: "lg", href: "/features/control-panel/" },
+  { icon: ImagePlus, key: "generator", span: "sm", href: "/features/screenshots-recordings/" },
   // Row 6: large + small = 3. The CLI pair sits last among the wide cards so
   // the app's own panels lead and this reads as "and beyond the app".
-  { icon: Bot, key: "ai", span: "lg" },
-  { icon: TerminalSquare, key: "cli", span: "sm" },
+  { icon: Bot, key: "ai", span: "lg", href: "/features/agentic-development/" },
+  { icon: TerminalSquare, key: "cli", span: "sm", href: "/cli/" },
   // Rows 7-9: 9 small cards = 3 full rows. Keep this a multiple of three or
   // the last row renders short.
-  { icon: AppWindow, key: "apps", span: "sm" },
-  { icon: Palette, key: "appearance", span: "sm" },
-  { icon: Settings2, key: "statusbar", span: "sm" },
-  { icon: Shield, key: "permissions", span: "sm" },
-  { icon: ScanFace, key: "faceid", span: "sm" },
-  { icon: KeyRound, key: "keychain", span: "sm" },
-  { icon: Wand2, key: "presets", span: "sm" },
-  { icon: HardDrive, key: "diskdoctor", span: "sm" },
-  { icon: Smartphone, key: "devices", span: "sm" },
+  { icon: AppWindow, key: "apps", span: "sm", href: "/features/control-panel/" },
+  { icon: Palette, key: "appearance", span: "sm", href: "/features/app-environment/" },
+  { icon: Settings2, key: "statusbar", span: "sm", href: "/features/app-environment/" },
+  { icon: Shield, key: "permissions", span: "sm", href: "/features/app-environment/" },
+  { icon: ScanFace, key: "faceid", span: "sm", href: "/features/app-environment/" },
+  { icon: KeyRound, key: "keychain", span: "sm", href: "/features/app-environment/" },
+  { icon: Wand2, key: "presets", span: "sm", href: "/features/control-panel/" },
+  { icon: HardDrive, key: "diskdoctor", span: "sm", href: "/features/control-panel/" },
+  { icon: Smartphone, key: "devices", span: "sm", href: "/features/control-panel/" },
 ];
 
 const containerVariants = {
@@ -107,6 +109,37 @@ const itemVariants = {
     transition: { duration: 0.5, ease: [0.22, 1, 0.36, 1] as const },
   },
 };
+
+function CardSurface({
+  href,
+  learnMore,
+  className,
+  children,
+}: {
+  href?: string;
+  learnMore: string;
+  className: string;
+  children: ReactNode;
+}) {
+  const content = (
+    <>
+      {children}
+      {href && (
+        <span className="mt-5 inline-flex items-center text-xs font-medium text-violet-light group-hover:translate-x-1 transition-transform">
+          {learnMore}
+        </span>
+      )}
+    </>
+  );
+
+  return href ? (
+    <Link href={href} className={className}>
+      {content}
+    </Link>
+  ) : (
+    <div className={className}>{content}</div>
+  );
+}
 
 export function Features() {
   const t = useTranslations("Features");
@@ -157,6 +190,7 @@ export function Features() {
             const isLarge = feature.span === "lg";
             const title = t(`items.${feature.key}.title`);
             const description = t(`items.${feature.key}.description`);
+            const learnMore = t("learnMore");
 
             if (isLarge) {
               return (
@@ -168,7 +202,11 @@ export function Features() {
                   <div className="absolute -inset-[1px] rounded-2xl bg-gradient-to-br from-violet-DEFAULT/20 via-violet-light/10 to-violet-DEFAULT/20 opacity-0 group-hover:opacity-100 transition-opacity duration-500 blur-[0.5px]" />
                   <div className="absolute inset-0 rounded-2xl border border-border/60 group-hover:border-transparent transition-colors duration-500" />
 
-                  <div className="relative rounded-2xl bg-card/40 backdrop-blur-sm overflow-hidden h-full group-hover:bg-card/70 transition-colors duration-400">
+                  <CardSurface
+                    href={feature.href}
+                    learnMore={learnMore}
+                    className="relative block rounded-2xl bg-card/40 backdrop-blur-sm overflow-hidden h-full group-hover:bg-card/70 transition-colors duration-400"
+                  >
                     <div className="absolute inset-0 bg-gradient-to-br from-violet-DEFAULT/[0.04] to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
 
                     <div className="relative p-6 flex flex-col md:flex-row md:items-center gap-6 h-full">
@@ -198,7 +236,7 @@ export function Features() {
                         </div>
                       )}
                     </div>
-                  </div>
+                  </CardSurface>
                 </motion.div>
               );
             }
@@ -211,7 +249,11 @@ export function Features() {
               >
                 <div className="absolute inset-0 bg-gradient-to-br from-violet-DEFAULT/[0.04] to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
 
-                <div className="relative p-6">
+                <CardSurface
+                  href={feature.href}
+                  learnMore={learnMore}
+                  className="relative block p-6"
+                >
                   <div className="flex items-start gap-3.5">
                     <div className="flex-shrink-0 p-2 rounded-xl bg-violet-DEFAULT/10 text-violet-light group-hover:bg-violet-DEFAULT/15 transition-colors duration-300">
                       <Icon className="h-5 w-5" />
@@ -225,7 +267,7 @@ export function Features() {
                       </p>
                     </div>
                   </div>
-                </div>
+                </CardSurface>
               </motion.div>
             );
           })}

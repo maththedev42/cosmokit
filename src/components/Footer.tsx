@@ -73,6 +73,14 @@ export function Footer() {
               </li>
               <li>
                 <Link
+                  href="/features/"
+                  className="text-sm text-muted-foreground hover:text-violet-light transition-colors duration-200"
+                >
+                  {t("allFeatures")}
+                </Link>
+              </li>
+              <li>
+                <Link
                   href="#faq"
                   className="text-sm text-muted-foreground hover:text-violet-light transition-colors duration-200"
                 >

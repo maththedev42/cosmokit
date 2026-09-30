@@ -38,6 +38,7 @@
     "title": "Everything you need, {highlight}",
     "titleHighlight": "one panel",
     "subtitle": "Replace dozens of {command} commands with an intuitive interface.",
+    "learnMore": "Learn more →",
     "items": {
       "screenshot": {
         "title": "Screen Capture",
@@ -121,7 +122,7 @@
       },
       "ai": {
         "title": "Works with your AI agent",
-        "description": "Run cosmokit mcp and any MCP client, such as Claude Code or Cursor, discovers 35 simulator tools it can call with typed arguments: install and launch apps, capture screenshots and video, replay GPS routes, send push payloads, flip permissions, trust a debugging certificate, and read UserDefaults and logs. Every command also takes --json, so an agent that only runs shell still gets a structured result to parse instead of prose."
+        "description": "Run cosmokit mcp and any MCP client, such as Claude Code or Cursor, discovers 52 simulator tools it can call with typed arguments: install and launch apps, capture screenshots and video, replay GPS routes, send push payloads, flip permissions, trust a debugging certificate, and read UserDefaults and logs. The agent can read the screen and tap (`ui tree` / `ui tap`) and you can watch in the browser. Every command also takes --json, so an agent that only runs shell still gets a structured result to parse instead of prose."
       },
       "cli": {
         "title": "cosmokit CLI",
@@ -277,6 +278,7 @@
     "terms": "Terms of Service",
     "macAppStore": "Mac App Store",
     "cli": "Command line tool",
+    "allFeatures": "All features",
     "copyright": "© {year} CosmoHQ. All rights reserved.",
     "builtWith": "Built with SwiftUI · macOS 14.7+"
   },

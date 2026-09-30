@@ -1,11 +1,15 @@
 import type { Metadata } from "next";
+import Link from "next/link";
+import { ArrowRight } from "lucide-react";
 import {
   MarketingShell,
   PageHero,
-  BulletList,
-  AppStoreButton,
-  FEATURES,
 } from "@/components/marketing/marketing";
+import { ReadyCTA } from "@/components/marketing/ReadyCTA";
+import {
+  FEATURE_PAGES,
+  isShown,
+} from "@/components/marketing/featurePages";
 
 export const metadata: Metadata = {
   title: "Features | CosmoKit for iOS Simulator",
@@ -15,6 +19,8 @@ export const metadata: Metadata = {
 };
 
 export default function FeaturesPage() {
+  const visiblePages = FEATURE_PAGES.filter(isShown);
+
   return (
     <MarketingShell>
       <PageHero
@@ -24,54 +30,34 @@ export default function FeaturesPage() {
         subtitle="CosmoKit is the native macOS companion for iOS developers: control, capture and inspect any simulator without touching the terminal."
       />
 
-      <div className="container mx-auto px-4 pb-8">
-        <div className="max-w-4xl mx-auto divide-y divide-border/40">
-          {FEATURES.map((f, i) => {
-            const Icon = f.icon;
+      <div className="container mx-auto px-4 pb-20">
+        <div className="max-w-5xl mx-auto grid sm:grid-cols-2 gap-6">
+          {visiblePages.map((p) => {
+            const href = p.externalHref ?? `/features/${p.slug}/`;
             return (
-              <section
-                key={f.id}
-                id={f.id}
-                className="scroll-mt-24 py-12 md:py-16 grid md:grid-cols-2 gap-8 items-start"
+              <Link
+                key={p.slug}
+                href={href}
+                className="group flex flex-col justify-between p-8 rounded-2xl border border-border/60 bg-card/40 backdrop-blur-sm hover:border-violet-DEFAULT/40 hover:bg-card/60 transition-all shadow-sm"
               >
-                <div className={i % 2 === 1 ? "md:order-2" : ""}>
-                  <div className="flex items-center gap-3 mb-3">
-                    <span className="p-2.5 rounded-xl bg-violet-DEFAULT/10 text-violet-light">
-                      <Icon className="h-5 w-5" />
-                    </span>
-                    <h2 className="text-2xl font-bold">{f.title}</h2>
-                  </div>
-                  <p className="text-sm font-medium text-violet-light/80 mb-3">
-                    {f.tagline}
-                  </p>
+                <div>
+                  <h2 className="text-xl font-bold tracking-tight mb-2 group-hover:text-violet-light transition-colors">
+                    {p.title}
+                  </h2>
                   <p className="text-[15px] text-muted-foreground leading-relaxed">
-                    {f.description}
+                    {p.cardBlurb}
                   </p>
                 </div>
-                <div
-                  className={`rounded-2xl border border-border/60 bg-card/40 backdrop-blur-sm p-6 ${
-                    i % 2 === 1 ? "md:order-1" : ""
-                  }`}
-                >
-                  <BulletList items={f.bullets} />
+                <div className="mt-6 flex items-center gap-1.5 text-sm font-medium text-violet-light group-hover:translate-x-1 transition-transform">
+                  {"\n"}Learn more <ArrowRight className="h-4 w-4" />
                 </div>
-              </section>
+              </Link>
             );
           })}
         </div>
-
-        <div className="max-w-2xl mx-auto text-center mt-12 rounded-2xl border border-border/60 bg-card/40 p-10">
-          <h2 className="text-2xl md:text-3xl font-bold mb-3">
-            Ready to take control of your simulator?
-          </h2>
-          <p className="text-muted-foreground mb-6">
-            Download CosmoKit on the Mac App Store and ship faster today.
-          </p>
-          <div className="flex justify-center">
-            <AppStoreButton />
-          </div>
-        </div>
       </div>
+
+      <ReadyCTA />
     </MarketingShell>
   );
 }
