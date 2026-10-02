@@ -1,6 +1,6 @@
 # Changelog
 
-## [0.5.0]
+## 0.5.0 — 2026-10-02
 
 - Added `cosmokit chat listen`: answers every message in the CosmoKit Agent window automatically by running one Claude turn per message batch.
 - Persists Claude session per chat thread across listener restarts; `--new` starts a fresh conversation.
