@@ -525,6 +525,17 @@ public enum ChatListener {
         }.joined(separator: "\n\n---\n\n")
     }
 
+    public static func verifyAppVersion() throws {
+        let controlInfo = try AppControl.readControlInfo()
+        if AppControl.isVersion(controlInfo.version, olderThan: "4.9.0") {
+            throw CLIError(commandError: CommandError(
+                code: .appTooOld,
+                message: "CosmoKit version \(controlInfo.version) is too old for chat listen",
+                hint: "CosmoKit 4.9.0 or newer is required (found \(controlInfo.version))"
+            ))
+        }
+    }
+
     public static func start(
         options: ChatListenOptions,
         runner: AgentTurnRunner = ClaudeTurnRunner(),
@@ -562,6 +573,9 @@ public enum ChatListener {
 
         while threadID == nil {
             do {
+                if chatClient == nil || AppControl.controlFileURLOverride != nil {
+                    try verifyAppVersion()
+                }
                 try client.registerIfNeeded()
                 if let id = client.currentThreadID {
                     threadID = id

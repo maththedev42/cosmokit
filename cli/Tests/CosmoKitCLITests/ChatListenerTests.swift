@@ -400,4 +400,34 @@ final class ChatListenerTests: XCTestCase {
             XCTAssertTrue(cliError?.commandError.message.contains("unsupported agent 'gemini'") ?? false)
         }
     }
+
+    func testVerifyAppVersionRejects480AndAccepts490() throws {
+        let tmp = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        try FileManager.default.createDirectory(at: tmp, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: tmp) }
+
+        let controlFile = tmp.appendingPathComponent("agent-control.json")
+        let json480 = """
+        {"pid": \(ProcessInfo.processInfo.processIdentifier), "port": 1234, "token": "test", "version": "4.8.0"}
+        """
+        try json480.write(to: controlFile, atomically: true, encoding: .utf8)
+        AppControl.controlFileURLOverride = controlFile
+        defer { AppControl.controlFileURLOverride = nil }
+
+        XCTAssertThrowsError(try ChatListener.verifyAppVersion()) { error in
+            guard let cliError = error as? CLIError else {
+                return XCTFail("Expected CLIError but got \(error)")
+            }
+            XCTAssertEqual(cliError.commandError.code, .appTooOld)
+            XCTAssertTrue(cliError.commandError.message.contains("4.8.0"))
+            XCTAssertTrue(cliError.commandError.hint?.contains("4.9.0") ?? false)
+        }
+
+        let json490 = """
+        {"pid": \(ProcessInfo.processInfo.processIdentifier), "port": 1234, "token": "test", "version": "4.9.0"}
+        """
+        try json490.write(to: controlFile, atomically: true, encoding: .utf8)
+
+        XCTAssertNoThrow(try ChatListener.verifyAppVersion())
+    }
 }
