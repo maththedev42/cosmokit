@@ -8,6 +8,48 @@ struct ChatMessageWire: Codable {
     let at: Date
     let context: [String: String]?
     let feedbackSeq: Int?
+
+    enum CodingKeys: String, CodingKey {
+        case id, threadId, from, text, at, context, feedbackSeq
+    }
+
+    init(id: UUID, threadId: UUID, from: String, text: String, at: Date, context: [String: String]? = nil, feedbackSeq: Int? = nil) {
+        self.id = id
+        self.threadId = threadId
+        self.from = from
+        self.text = text
+        self.at = at
+        self.context = context
+        self.feedbackSeq = feedbackSeq
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        id = try container.decode(UUID.self, forKey: .id)
+        threadId = try container.decode(UUID.self, forKey: .threadId)
+        from = try container.decode(String.self, forKey: .from)
+        text = try container.decode(String.self, forKey: .text)
+        context = try container.decodeIfPresent([String: String].self, forKey: .context)
+        feedbackSeq = try container.decodeIfPresent(Int.self, forKey: .feedbackSeq)
+
+        if let date = try? container.decode(Date.self, forKey: .at) {
+            at = date
+        } else if let num = try? container.decode(Double.self, forKey: .at) {
+            at = num > 1_000_000_000 ? Date(timeIntervalSince1970: num) : Date(timeIntervalSinceReferenceDate: num)
+        } else if let str = try? container.decode(String.self, forKey: .at) {
+            let fractionalFormatter = ISO8601DateFormatter()
+            fractionalFormatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+            if let date = fractionalFormatter.date(from: str) ?? ISO8601DateFormatter().date(from: str) {
+                at = date
+            } else if let num = Double(str) {
+                at = num > 1_000_000_000 ? Date(timeIntervalSince1970: num) : Date(timeIntervalSinceReferenceDate: num)
+            } else {
+                throw DecodingError.dataCorruptedError(forKey: .at, in: container, debugDescription: "Invalid date format: \(str)")
+            }
+        } else {
+            throw DecodingError.dataCorruptedError(forKey: .at, in: container, debugDescription: "Expected Date, Double, or String for 'at'")
+        }
+    }
 }
 
 struct ChatThreadWire: Codable {
