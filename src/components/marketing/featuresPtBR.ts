@@ -87,6 +87,18 @@ const PT_BR: Record<string, LocalizedFeature> = {
       "Histórico de links reutilizável",
     ],
   },
+  agent: {
+    title: "Chat com agentes e automação",
+    tagline: "Converse com seu agente de código no CosmoKit",
+    description:
+      "Converse com seu agente de código em uma janela no CosmoKit, e o cosmokit chat listen faz o Claude, Codex ou Cursor responder a cada mensagem.",
+    bullets: [
+      "Janela de chat no app com status ao vivo",
+      "cosmokit chat listen executa Claude, Codex ou Cursor local",
+      "56 ferramentas MCP para controle do simulador",
+      "Seguro por padrão com permissões somente leitura",
+    ],
+  },
 };
 
 /// FEATURES with Portuguese copy, keeping the original icon, id and path.

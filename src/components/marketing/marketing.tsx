@@ -17,6 +17,7 @@ import {
   Bell,
   MapPin,
   Link2,
+  Bot,
   type LucideIcon,
 } from "lucide-react";
 
@@ -123,6 +124,21 @@ export const FEATURES: Feature[] = [
       "Test universal links",
       "Validate routing and onboarding",
       "Reusable link history",
+    ],
+  },
+  {
+    id: "agent",
+    path: "/features/agentic-development/",
+    icon: Bot,
+    title: "Agent chat & automation",
+    tagline: "Talk to your coding agent from CosmoKit",
+    description:
+      "Type to your coding agent from a window in CosmoKit, and cosmokit chat listen has Claude, Codex or Cursor answer every message.",
+    bullets: [
+      "In-app Agent window with live status",
+      "cosmokit chat listen runs local Claude, Codex, or Cursor",
+      "56 MCP tools for simulator inspection and control",
+      "Safe by default with read-only permissions",
     ],
   },
 ];

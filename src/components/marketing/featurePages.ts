@@ -105,8 +105,9 @@ export const FEATURE_PAGES: FeaturePageDef[] = [
         bullets: [
           "In-app Agent window with live listening status, 'Read by agent' receipts, and working indicators",
           "cosmokit chat listen answers messages automatically using your local Claude, Codex, or Cursor agent",
-          "Fast turnarounds (~5s with Claude; Codex and Cursor supported)",
-          "Read-only by default with simulator control tools; pass --allow-edits to permit file modifications",
+          "About 5 seconds with Claude; Codex and Cursor take longer",
+          "Safe by default: read-only file access plus simulator control tools (Claude read-only tools, Codex -s read-only, Cursor --mode ask)",
+          "Pass --allow-edits to permit file modifications, edits, and command execution",
           "Any MCP client can also read and reply via chat_read and chat_reply tools",
         ],
         code: {

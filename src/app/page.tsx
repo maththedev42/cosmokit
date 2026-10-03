@@ -22,9 +22,9 @@ export default function RootPage() {
     <main className="min-h-screen bg-background text-foreground flex flex-col items-center justify-center gap-6 px-4 text-center">
       <h1 className="text-3xl font-bold">CosmoKit | iOS Simulator Toolkit for Mac</h1>
       <p className="max-w-xl text-muted-foreground">
-        Control the iOS Simulator from one native Mac app: screenshots, video
-        recording, push notifications, deep links, GPS simulation and network
-        proxy.
+        Control the iOS Simulator from one native Mac app: type to your coding
+        agent with cosmokit chat listen, inspect and mock HTTPS traffic, record
+        video, test push notifications, and simulate GPS.
       </p>
       <nav className="flex gap-6 text-violet-light">
         <a href="/en/" className="hover:underline">English</a>
