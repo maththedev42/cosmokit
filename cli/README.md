@@ -27,7 +27,7 @@ Download the universal binary archive from
 `/usr/local`:
 
 ```sh
-sudo tar xzf cosmokit-0.5.0-macos-universal.tar.gz -C /usr/local
+sudo tar xzf cosmokit-0.5.1-macos-universal.tar.gz -C /usr/local
 xattr -d com.apple.quarantine /usr/local/bin/cosmokit
 ```
 

@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.5.1 — Unreleased
+## 0.5.1 — 2026-10-03
 
 - Added Codex (`codex`) and Cursor (`cursor-agent`) runners to `cosmokit chat listen`.
 - Automatic agent detection: checks PATH in order (`claude`, `codex`, `cursor-agent`), with overrides via `--agent <name>` flag and `COSMOKIT_AGENT` environment variable.
