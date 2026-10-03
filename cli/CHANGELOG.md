@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.5.1 — Unreleased
+
+- Added Codex (`codex`) and Cursor (`cursor-agent`) runners to `cosmokit chat listen`.
+- Automatic agent detection: checks PATH in order (`claude`, `codex`, `cursor-agent`), with overrides via `--agent <name>` flag and `COSMOKIT_AGENT` environment variable.
+- Per-agent thread registration: `claude-listen`, `codex-listen`, and `cursor-listen`.
+- Dynamic Codex MCP injection via `-c` flags with zero approval prompts.
+- Cursor MCP configuration check: warns at startup if `cosmokit` is missing from `~/.cursor/mcp.json` or `.cursor/mcp.json`.
+- Strict tool and MCP isolation: Claude uses `--strict-mcp-config`, inner agents run with `COSMOKIT_CHAT=off`.
+- Line-buffered stdout: output flushes immediately when redirected (`> log` or `| tee`).
+
 ## 0.5.0 — 2026-10-02
 
 - Added `cosmokit chat listen`: answers every message in the CosmoKit Agent window automatically by running one Claude turn per message batch.
