@@ -171,7 +171,9 @@ public final class ClaudeTurnRunner: AgentTurnRunner {
         process.standardOutput = stdoutPipe
         process.standardError = stderrPipe
 
-        process.environment = ProcessInfo.processInfo.environment
+        var env = ProcessInfo.processInfo.environment
+        env["COSMOKIT_CHAT"] = "off"
+        process.environment = env
 
         try process.run()
         ClaudeTurnRunner.setActiveProcess(process)
@@ -224,6 +226,7 @@ public final class ClaudeTurnRunner: AgentTurnRunner {
         var args = [
             "-p", prompt,
             "--output-format", "json",
+            "--strict-mcp-config",
             "--mcp-config", mcpConfigPath
         ]
 
@@ -542,6 +545,8 @@ public enum ChatListener {
         chatClient: ChatClient? = nil,
         sessionStore: SessionStore = SessionStore()
     ) throws {
+        setvbuf(stdout, nil, _IOLBF, 0)
+
         guard options.agent == "claude" else {
             throw CLIError(commandError: CommandError(
                 code: .usage,

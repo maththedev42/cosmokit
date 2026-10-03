@@ -163,6 +163,15 @@ final class ChatListenerTests: XCTestCase {
         XCTAssertNil(sessionStore.loadSessionID(for: threadID))
     }
 
+    func testClaudeTurnRunnerBuildArgumentsIncludesStrictMCPConfig() throws {
+        let runner = ClaudeTurnRunner()
+        let options = ChatListenOptions()
+        let args = runner.buildArguments(prompt: "hello", sessionID: nil, options: options, mcpConfigPath: "/tmp/mcp.json")
+        XCTAssertTrue(args.contains("--strict-mcp-config"))
+        XCTAssertTrue(args.contains("--mcp-config"))
+        XCTAssertEqual(args[args.firstIndex(of: "--mcp-config")! + 1], "/tmp/mcp.json")
+    }
+
     func testClaudeTurnRunnerMissingExecutable() throws {
         let runner = ClaudeTurnRunner()
         runner.executableFinder = { nil }

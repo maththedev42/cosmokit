@@ -1438,6 +1438,7 @@ public enum CLI {
     }
 
     public static func performChat(_ args: [String], json: Bool) throws {
+        setvbuf(stdout, nil, _IOLBF, 0)
         if args.isEmpty || args.first == "--help" || args.first == "-h" || args.first == "help" {
             print(chatUsageText())
             return
@@ -1457,6 +1458,7 @@ public enum CLI {
     }
 
     public static func performChatCommand(_ args: [String]) throws -> CommandOutcome {
+        setvbuf(stdout, nil, _IOLBF, 0)
         if args.isEmpty || args.first == "--help" || args.first == "-h" || args.first == "help" {
             return CommandOutcome(human: chatUsageText(), json: EmptyPayload())
         }
