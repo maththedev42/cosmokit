@@ -1373,19 +1373,22 @@ public enum CLI {
 
         DESCRIPTION
           Runs a long-running listener that waits for messages typed in CosmoKit's
-          Agent window. For each message, it runs one Claude turn using your local
-          Claude login and usage, and posts the answer back to the window in a few
+          Agent window. For each message, it runs one agent turn using your local
+          agent login and usage, and posts the answer back to the window in a few
           seconds.
 
-          By default, Claude has read-only access plus simulator control tools.
+          Automatically detects installed agents (checks claude, codex, cursor-agent)
+          or accepts an explicit --agent flag or COSMOKIT_AGENT environment variable.
+
+          By default, the agent has read-only access plus simulator control tools.
           Use --allow-edits to permit file modifications.
 
         OPTIONS
           --new                 Start a fresh conversation (ignore saved session)
-          --model <name>        Claude model to use (passed through to claude)
-          --allow-edits         Allow Claude to edit, write, and run bash commands
+          --model <name>        Model to use (passed through to the agent)
+          --allow-edits         Allow agent to edit, write, and run commands
           --timeout <seconds>   Turn timeout in seconds (default: 600)
-          --agent <name>        Agent runner to use (default: claude; only claude is supported)
+          --agent <name>        Agent runner to use: claude, codex, cursor (default: auto-detected)
           --json                Emit machine-readable JSON events
           -h, --help            Show this help message
         """
@@ -1421,11 +1424,11 @@ public enum CLI {
                 guard i + 1 < args.count else {
                     throw CLIError(commandError: CommandError(code: .usage, message: "--agent requires an agent name"))
                 }
-                let agentName = args[i + 1]
-                guard agentName == "claude" else {
-                    throw CLIError(commandError: CommandError(code: .usage, message: "unsupported agent '\(agentName)'. Currently only 'claude' is supported."))
+                let rawAgent = args[i + 1]
+                guard let supported = SupportedAgent.from(raw: rawAgent) else {
+                    throw CLIError(commandError: CommandError(code: .usage, message: "unsupported agent '\(rawAgent)'. Supported agents: claude, codex, cursor."))
                 }
-                options.agent = agentName
+                options.agent = supported.rawValue
                 i += 2
             case "--json":
                 options.isJSON = true

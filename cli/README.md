@@ -429,11 +429,14 @@ thread. Chat text is data and is never executed as a command.
 cosmokit chat listen
 ```
 
-- It runs one Claude turn per message using your own Claude login and usage.
-- Replies take about 5 to 10 seconds.
-- The default is read-only file access plus simulator control tools.
-- `--allow-edits` lets Claude edit, write, and execute shell commands.
+- Automatically runs Claude (`claude`), Codex (`codex`), or Cursor (`cursor-agent`), detecting whichever is installed in your PATH in that order.
+- Select an explicit agent with `--agent <claude|codex|cursor>` or the `COSMOKIT_AGENT` environment variable.
+- Replies take about 5 to 10 seconds using your local agent authentication and usage.
+- Safe by default: read-only file access plus simulator control tools (Claude read-only tools, Codex `-s read-only`, Cursor `--mode ask`).
+- `--allow-edits` permits the agent to edit, write files, and run commands.
 - The conversation session persists across listener restarts; use `--new` to start fresh.
+- Output is line-buffered so redirects to files (`> listen.log`) or pipes (`| tee`) flush immediately.
+- For Cursor, configure the `cosmokit` MCP server in `~/.cursor/mcp.json` or `.cursor/mcp.json` to make simulator control tools available.
 
 ### Proxy boundary
 

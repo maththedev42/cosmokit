@@ -439,4 +439,271 @@ final class ChatListenerTests: XCTestCase {
 
         XCTAssertNoThrow(try ChatListener.verifyAppVersion())
     }
+
+    // MARK: - CodexTurnRunner Tests
+
+    func testCodexTurnRunnerBuildArgumentsInitial() {
+        let runner = CodexTurnRunner()
+        var options = ChatListenOptions(allowEdits: false, workingDir: "/tmp/work")
+        options.model = "gpt-5"
+        let args = runner.buildArguments(prompt: "Hello", sessionID: nil, options: options, outputFilePath: "/tmp/out.txt", cosmokitBinary: "/bin/cosmokit")
+
+        XCTAssertEqual(args[0], "exec")
+        XCTAssertTrue(args.contains("--skip-git-repo-check"))
+        XCTAssertTrue(args.contains("-s"))
+        XCTAssertEqual(args[args.firstIndex(of: "-s")! + 1], "read-only")
+        XCTAssertTrue(args.contains("-C"))
+        XCTAssertEqual(args[args.firstIndex(of: "-C")! + 1], "/tmp/work")
+        XCTAssertTrue(args.contains("-m"))
+        XCTAssertEqual(args[args.firstIndex(of: "-m")! + 1], "gpt-5")
+        XCTAssertTrue(args.contains("--json"))
+        XCTAssertTrue(args.contains("-o"))
+        XCTAssertEqual(args[args.firstIndex(of: "-o")! + 1], "/tmp/out.txt")
+        XCTAssertEqual(args.last, "Hello")
+
+        // With allowEdits
+        var editsOptions = ChatListenOptions(allowEdits: true, workingDir: "/tmp/work")
+        let editsArgs = runner.buildArguments(prompt: "Hello", sessionID: nil, options: editsOptions, outputFilePath: "/tmp/out.txt", cosmokitBinary: "/bin/cosmokit")
+        XCTAssertEqual(editsArgs[editsArgs.firstIndex(of: "-s")! + 1], "workspace-write")
+    }
+
+    func testCodexTurnRunnerBuildArgumentsResume() {
+        let runner = CodexTurnRunner()
+        let options = ChatListenOptions(workingDir: "/tmp/work")
+        let args = runner.buildArguments(prompt: "Hello again", sessionID: "sess-123", options: options, outputFilePath: "/tmp/out.txt", cosmokitBinary: "/bin/cosmokit")
+
+        XCTAssertEqual(args[0], "exec")
+        XCTAssertEqual(args[1], "resume")
+        XCTAssertEqual(args[2], "sess-123")
+        XCTAssertEqual(args[3], "Hello again")
+        XCTAssertTrue(args.contains("--skip-git-repo-check"))
+        XCTAssertFalse(args.contains("-s"))
+        XCTAssertFalse(args.contains("-C"))
+        XCTAssertTrue(args.contains("--json"))
+        XCTAssertTrue(args.contains("-o"))
+    }
+
+    func testCodexTurnRunnerSuccessFromOutputFile() throws {
+        let runner = CodexTurnRunner()
+        runner.executableFinder = { "/bin/codex" }
+        runner.processRunner = { _, args, _ in
+            let oIdx = args.firstIndex(of: "-o")!
+            let path = args[oIdx + 1]
+            try! "Codex output answer".write(toFile: path, atomically: true, encoding: .utf8)
+            let stdout = "{\"type\":\"thread.started\",\"thread_id\":\"codex-sess-uuid\"}\n{\"type\":\"turn.completed\"}\n"
+            return (stdout: stdout, stderr: "", exitCode: 0, timedOut: false)
+        }
+
+        let result = try runner.runTurn(prompt: "hi", sessionID: nil, options: ChatListenOptions())
+        XCTAssertFalse(result.isError)
+        XCTAssertEqual(result.reply, "Codex output answer")
+        XCTAssertEqual(result.sessionID, "codex-sess-uuid")
+    }
+
+    func testCodexTurnRunnerSuccessFromAgentMessage() throws {
+        let runner = CodexTurnRunner()
+        runner.executableFinder = { "/bin/codex" }
+        runner.processRunner = { _, _, _ in
+            let stdout = """
+            {"type":"thread.started","thread_id":"codex-sess-456"}
+            {"type":"item.completed","item":{"type":"agent_message","text":"Answer from agent_message event"}}
+            {"type":"turn.completed"}
+            """
+            return (stdout: stdout, stderr: "", exitCode: 0, timedOut: false)
+        }
+
+        let result = try runner.runTurn(prompt: "hi", sessionID: nil, options: ChatListenOptions())
+        XCTAssertFalse(result.isError)
+        XCTAssertEqual(result.reply, "Answer from agent_message event")
+        XCTAssertEqual(result.sessionID, "codex-sess-456")
+    }
+
+    func testCodexTurnRunnerResumeFallback() throws {
+        let runner = CodexTurnRunner()
+        runner.executableFinder = { "/bin/codex" }
+        var invocationCount = 0
+
+        runner.processRunner = { _, args, _ in
+            invocationCount += 1
+            if args.contains("resume") {
+                return (stdout: "", stderr: "Error: thread/resume failed: no rollout found for thread id dead-id", exitCode: 1, timedOut: false)
+            } else {
+                let oIdx = args.firstIndex(of: "-o")!
+                let path = args[oIdx + 1]
+                try! "Fresh Codex reply".write(toFile: path, atomically: true, encoding: .utf8)
+                let stdout = "{\"type\":\"thread.started\",\"thread_id\":\"fresh-codex-id\"}\n{\"type\":\"turn.completed\"}\n"
+                return (stdout: stdout, stderr: "", exitCode: 0, timedOut: false)
+            }
+        }
+
+        let result = try runner.runTurn(prompt: "hi", sessionID: "dead-id", options: ChatListenOptions())
+        XCTAssertEqual(invocationCount, 2)
+        XCTAssertFalse(result.isError)
+        XCTAssertEqual(result.sessionID, "fresh-codex-id")
+        XCTAssertTrue(result.reply.contains("Previous session expired or could not be resumed"))
+        XCTAssertTrue(result.reply.contains("Fresh Codex reply"))
+    }
+
+    func testCodexTurnRunnerNotLoggedIn() throws {
+        let runner = CodexTurnRunner()
+        runner.executableFinder = { "/bin/codex" }
+        runner.processRunner = { _, _, _ in
+            (stdout: "Error: Not logged in. Please log in first.", stderr: "", exitCode: 1, timedOut: false)
+        }
+
+        let result = try runner.runTurn(prompt: "hi", sessionID: nil, options: ChatListenOptions())
+        XCTAssertTrue(result.isError)
+        XCTAssertTrue(result.reply.contains("Codex is not logged in"))
+    }
+
+    func testCodexTurnRunnerTimeout() throws {
+        let runner = CodexTurnRunner()
+        runner.executableFinder = { "/bin/codex" }
+        runner.processRunner = { _, _, _ in
+            (stdout: "", stderr: "", exitCode: 0, timedOut: true)
+        }
+
+        let result = try runner.runTurn(prompt: "hi", sessionID: nil, options: ChatListenOptions(timeout: 10))
+        XCTAssertTrue(result.isError)
+        XCTAssertTrue(result.reply.contains("Codex turn timed out after 10 seconds"))
+    }
+
+    // MARK: - CursorTurnRunner Tests
+
+    func testCursorTurnRunnerBuildArguments() {
+        let runner = CursorTurnRunner()
+        let options = ChatListenOptions(allowEdits: false, workingDir: "/tmp/work")
+        let args = runner.buildArguments(prompt: "Hello", sessionID: "cursor-123", options: options)
+
+        XCTAssertTrue(args.contains("-p"))
+        XCTAssertTrue(args.contains("--output-format"))
+        XCTAssertEqual(args[args.firstIndex(of: "--output-format")! + 1], "json")
+        XCTAssertTrue(args.contains("--trust"))
+        XCTAssertTrue(args.contains("--approve-mcps"))
+        XCTAssertTrue(args.contains("--mode"))
+        XCTAssertEqual(args[args.firstIndex(of: "--mode")! + 1], "ask")
+        XCTAssertTrue(args.contains("--resume"))
+        XCTAssertEqual(args[args.firstIndex(of: "--resume")! + 1], "cursor-123")
+
+        // With allowEdits
+        var editsOptions = ChatListenOptions(allowEdits: true, workingDir: "/tmp/work")
+        let editsArgs = runner.buildArguments(prompt: "Hello", sessionID: nil, options: editsOptions)
+        XCTAssertTrue(editsArgs.contains("-f"))
+        XCTAssertFalse(editsArgs.contains("--mode"))
+    }
+
+    func testCursorTurnRunnerSuccess() throws {
+        let runner = CursorTurnRunner()
+        runner.executableFinder = { "/bin/cursor-agent" }
+        runner.processRunner = { _, _, _ in
+            let json = "{\"type\":\"result\",\"subtype\":\"success\",\"is_error\":false,\"result\":\"Hello from Cursor\",\"session_id\":\"cursor-abc-uuid\",\"duration_ms\":3500}"
+            return (stdout: json, stderr: "", exitCode: 0, timedOut: false)
+        }
+
+        let result = try runner.runTurn(prompt: "hi", sessionID: nil, options: ChatListenOptions())
+        XCTAssertFalse(result.isError)
+        XCTAssertEqual(result.reply, "Hello from Cursor")
+        XCTAssertEqual(result.sessionID, "cursor-abc-uuid")
+        XCTAssertEqual(result.durationMs, 3500)
+    }
+
+    func testCursorTurnRunnerNotLoggedIn() throws {
+        let runner = CursorTurnRunner()
+        runner.executableFinder = { "/bin/cursor-agent" }
+        runner.processRunner = { _, _, _ in
+            (stdout: "{\"is_error\":true,\"result\":\"Not logged in. Please log in.\",\"session_id\":null}", stderr: "", exitCode: 1, timedOut: false)
+        }
+
+        let result = try runner.runTurn(prompt: "hi", sessionID: nil, options: ChatListenOptions())
+        XCTAssertTrue(result.isError)
+        XCTAssertTrue(result.reply.contains("Cursor is not logged in"))
+    }
+
+    func testCursorTurnRunnerTimeout() throws {
+        let runner = CursorTurnRunner()
+        runner.executableFinder = { "/bin/cursor-agent" }
+        runner.processRunner = { _, _, _ in
+            (stdout: "", stderr: "", exitCode: 0, timedOut: true)
+        }
+
+        let result = try runner.runTurn(prompt: "hi", sessionID: nil, options: ChatListenOptions(timeout: 15))
+        XCTAssertTrue(result.isError)
+        XCTAssertTrue(result.reply.contains("Cursor turn timed out after 15 seconds"))
+    }
+
+    // MARK: - Agent Resolution Tests
+
+    func testResolveAgentExplicitFlag() throws {
+        let resClaude = try ChatListener.resolveAgent(
+            requested: "claude",
+            environment: [:],
+            fileManager: FileManager.default
+        )
+        XCTAssertEqual(resClaude.agent, .claude)
+        XCTAssertEqual(resClaude.source, "flag")
+
+        let resCodex = try ChatListener.resolveAgent(
+            requested: "codex",
+            environment: [:],
+            fileManager: FileManager.default
+        )
+        XCTAssertEqual(resCodex.agent, .codex)
+        XCTAssertEqual(resCodex.source, "flag")
+
+        let resCursor = try ChatListener.resolveAgent(
+            requested: "cursor",
+            environment: [:],
+            fileManager: FileManager.default
+        )
+        XCTAssertEqual(resCursor.agent, .cursor)
+        XCTAssertEqual(resCursor.source, "flag")
+    }
+
+    func testResolveAgentEnvironmentVariable() throws {
+        let resEnv = try ChatListener.resolveAgent(
+            requested: nil,
+            environment: ["COSMOKIT_AGENT": "codex"],
+            fileManager: FileManager.default
+        )
+        XCTAssertEqual(resEnv.agent, .codex)
+        XCTAssertEqual(resEnv.source, "COSMOKIT_AGENT")
+    }
+
+    func testResolveAgentUnsupported() {
+        XCTAssertThrowsError(try ChatListener.resolveAgent(
+            requested: "unknown-agent",
+            environment: [:],
+            fileManager: FileManager.default
+        )) { error in
+            guard let cliError = error as? CLIError else { return XCTFail() }
+            XCTAssertEqual(cliError.commandError.code, .usage)
+            XCTAssertTrue(cliError.commandError.message.contains("unsupported agent 'unknown-agent'"))
+        }
+    }
+
+    func testSupportedAgentClientNames() {
+        XCTAssertEqual(SupportedAgent.claude.clientName, "claude-listen")
+        XCTAssertEqual(SupportedAgent.codex.clientName, "codex-listen")
+        XCTAssertEqual(SupportedAgent.cursor.clientName, "cursor-listen")
+    }
+
+    func testCursorMCPCheck() throws {
+        let tmpDir = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        try FileManager.default.createDirectory(at: tmpDir, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: tmpDir) }
+
+        // Initially not configured
+        XCTAssertFalse(ChatListener.isCursorMCPConfigured(workingDir: tmpDir.path))
+
+        // Create .cursor/mcp.json with cosmokit
+        let cursorDir = tmpDir.appendingPathComponent(".cursor")
+        try FileManager.default.createDirectory(at: cursorDir, withIntermediateDirectories: true)
+        let mcpFile = cursorDir.appendingPathComponent("mcp.json")
+        let config = """
+        {"mcpServers": {"cosmokit": {"command": "cosmokit", "args": ["mcp"]}}}
+        """
+        try config.write(to: mcpFile, atomically: true, encoding: .utf8)
+
+        XCTAssertTrue(ChatListener.isCursorMCPConfigured(workingDir: tmpDir.path))
+    }
 }
