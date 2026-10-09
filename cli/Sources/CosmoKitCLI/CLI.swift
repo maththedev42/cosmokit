@@ -1380,13 +1380,29 @@ public enum CLI {
           Automatically detects installed agents (checks claude, codex, cursor-agent)
           or accepts an explicit --agent flag or COSMOKIT_AGENT environment variable.
 
-          By default, the agent has read-only access plus simulator control tools.
-          Use --allow-edits to permit file modifications.
+          By default, the agent has read-only access. Simulator control tools
+          are available with Claude (MCP); Codex is instructed to use them
+          but MCP calls have not been observed live; Cursor has no simulator
+          tools in any mode. Use --allow-edits to permit file modifications
+          (refused with Cursor unless --unrestricted is also given).
+
+          Agent capabilities (measured wall time per reply in parentheses):
+            claude    default read-only + simulator tools; --allow-edits
+                      adds edits (~5s)
+            codex     default read-only sandbox, simulator via shell;
+                      --allow-edits adds workspace writes, kept per session
+                      and re-checked on resume (~35-58s)
+            cursor    default plan mode: no writes, answers only, no
+                      simulator tools (~75s, most of it Cursor startup);
+                      --allow-edits is refused; --unrestricted allows
+                      everything (Cursor -f/--yolo: any command, writes
+                      anywhere) and says so at startup and in the first reply
 
         OPTIONS
           --new                 Start a fresh conversation (ignore saved session)
           --model <name>        Model to use (passed through to the agent)
-          --allow-edits         Allow agent to edit, write, and run commands
+          --allow-edits         Allow agent to edit, write, and run commands (Cursor: requires --unrestricted)
+          --unrestricted        Cursor only: allow any command and writes anywhere (maps to -f/--yolo)
           --timeout <seconds>   Turn timeout in seconds (default: 600)
           --agent <name>        Agent runner to use: claude, codex, cursor (default: auto-detected)
           --json                Emit machine-readable JSON events
@@ -1413,6 +1429,9 @@ public enum CLI {
                 i += 2
             case "--allow-edits":
                 options.allowEdits = true
+                i += 1
+            case "--unrestricted":
+                options.unrestricted = true
                 i += 1
             case "--timeout":
                 guard i + 1 < args.count, let seconds = Double(args[i + 1]), seconds > 0 else {

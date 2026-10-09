@@ -431,12 +431,13 @@ cosmokit chat listen
 
 - Automatically runs Claude (`claude`), Codex (`codex`), or Cursor (`cursor-agent`), detecting whichever is installed in your PATH in that order.
 - Select an explicit agent with `--agent <claude|codex|cursor>` or the `COSMOKIT_AGENT` environment variable.
-- Replies take about 5 to 10 seconds using your local agent authentication and usage.
-- Safe by default: read-only file access plus simulator control tools (Claude read-only tools, Codex `-s read-only`, Cursor `--mode ask`).
-- `--allow-edits` permits the agent to edit, write files, and run commands.
+- What each agent can do (measured wall time per reply in parentheses):
+  - `claude`: default read-only file access plus simulator control tools (MCP); `--allow-edits` permits edits, writes and commands (~5s).
+  - `codex`: default read-only sandbox; simulator questions are answered from the shell because MCP tool calls could not be verified live. `--allow-edits` permits workspace writes; the mode is stored with the session, and a changed mode starts a new session on resume (~35–58s).
+  - `cursor`: default plan mode — no file writes, answers only, and no simulator tools (MCP calls are rejected even when approved). `--allow-edits` alone refuses to start because it maps to Cursor's `-f`/`--yolo` (run everything: any command, writes anywhere); pass `--unrestricted` to explicitly allow that, which is stated at startup and in the session's first reply (~75s per reply, most of it Cursor's own startup).
 - The conversation session persists across listener restarts; use `--new` to start fresh.
 - Output is line-buffered so redirects to files (`> listen.log`) or pipes (`| tee`) flush immediately.
-- For Cursor, configure the `cosmokit` MCP server in `~/.cursor/mcp.json` or `.cursor/mcp.json` to make simulator control tools available.
+- For Cursor, simulator control tools are unavailable in every mode (MCP calls are rejected even with `--approve-mcps` and a configured `cosmokit` server), so the listener does not depend on `~/.cursor/mcp.json` or `.cursor/mcp.json`.
 
 ### Proxy boundary
 

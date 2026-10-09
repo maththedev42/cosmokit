@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.5.2 — unreleased
+
+- `cosmokit chat listen` now tells the truth per agent (help, README and startup line): Claude keeps read-only tools plus simulator control; Codex runs read-only with a stored permission mode (a changed mode starts a new session on resume) and is instructed to prefer the cosmokit MCP tools; Cursor defaults to plan mode (no writes, answers only, no simulator tools).
+- `--allow-edits` is refused with Cursor unless the new explicit `--unrestricted` flag is also passed (Cursor `-f`/`--yolo` runs everything); unrestricted Cursor sessions state the scope at startup and in the first reply.
+- Measured reply times: Claude ~5 s, Codex 35–58 s, Cursor ~75 s wall (3–10 s model, the rest Cursor startup).
+
 ## 0.5.1 — 2026-10-03
 
 - Added Codex (`codex`) and Cursor (`cursor-agent`) runners to `cosmokit chat listen`.

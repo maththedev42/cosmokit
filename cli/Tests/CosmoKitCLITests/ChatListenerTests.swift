@@ -581,12 +581,13 @@ final class ChatListenerTests: XCTestCase {
         XCTAssertTrue(args.contains("--trust"))
         XCTAssertTrue(args.contains("--approve-mcps"))
         XCTAssertTrue(args.contains("--mode"))
-        XCTAssertEqual(args[args.firstIndex(of: "--mode")! + 1], "ask")
+        XCTAssertEqual(args[args.firstIndex(of: "--mode")! + 1], "plan")
         XCTAssertTrue(args.contains("--resume"))
         XCTAssertEqual(args[args.firstIndex(of: "--resume")! + 1], "cursor-123")
 
-        // With allowEdits
+        // With allowEdits + unrestricted
         var editsOptions = ChatListenOptions(allowEdits: true, workingDir: "/tmp/work")
+        editsOptions.unrestricted = true
         let editsArgs = runner.buildArguments(prompt: "Hello", sessionID: nil, options: editsOptions)
         XCTAssertTrue(editsArgs.contains("-f"))
         XCTAssertFalse(editsArgs.contains("--mode"))
@@ -685,6 +686,151 @@ final class ChatListenerTests: XCTestCase {
         XCTAssertEqual(SupportedAgent.claude.clientName, "claude-listen")
         XCTAssertEqual(SupportedAgent.codex.clientName, "codex-listen")
         XCTAssertEqual(SupportedAgent.cursor.clientName, "cursor-listen")
+    }
+
+    // MARK: - CHAT-12: stored permission mode (Codex sessions keep their sandbox)
+
+    func testSessionRecordRoundTrip() throws {
+        let sessionStore = SessionStore(directoryURL: tempDirectory.appendingPathComponent("sessions"))
+        XCTAssertNil(sessionStore.loadSessionRecord(for: threadID))
+
+        sessionStore.saveSession(SessionRecord(sessionID: "sess-1", permissionMode: .readOnly), for: threadID)
+        XCTAssertEqual(sessionStore.loadSessionRecord(for: threadID), SessionRecord(sessionID: "sess-1", permissionMode: .readOnly))
+
+        sessionStore.saveSession(SessionRecord(sessionID: "sess-2", permissionMode: .edits), for: threadID)
+        XCTAssertEqual(sessionStore.loadSessionRecord(for: threadID), SessionRecord(sessionID: "sess-2", permissionMode: .edits))
+    }
+
+    func testResolveResumedSessionSameModeResumes() {
+        let stored = SessionRecord(sessionID: "sess-1", permissionMode: .readOnly)
+        let resolved = ChatListener.resolveResumedSession(
+            stored: stored, requestedMode: .readOnly, isNewSession: false, enforceMode: true
+        )
+        XCTAssertEqual(resolved.sessionID, "sess-1")
+        XCTAssertFalse(resolved.startedNew)
+        XCTAssertNil(resolved.note)
+    }
+
+    func testResolveResumedSessionModeChangeStartsNew() {
+        let stored = SessionRecord(sessionID: "sess-1", permissionMode: .edits)
+        let resolved = ChatListener.resolveResumedSession(
+            stored: stored, requestedMode: .readOnly, isNewSession: false, enforceMode: true
+        )
+        XCTAssertNil(resolved.sessionID)
+        XCTAssertTrue(resolved.startedNew)
+        XCTAssertTrue(resolved.note?.contains("started a new session") ?? false)
+    }
+
+    func testResolveResumedSessionLegacyRecordWithoutModeStartsNew() {
+        let stored = SessionRecord(sessionID: "sess-legacy", permissionMode: nil)
+        let resolved = ChatListener.resolveResumedSession(
+            stored: stored, requestedMode: .readOnly, isNewSession: false, enforceMode: true
+        )
+        XCTAssertNil(resolved.sessionID)
+        XCTAssertTrue(resolved.startedNew)
+        XCTAssertTrue(resolved.note?.contains("started a new session") ?? false)
+    }
+
+    func testResolveResumedSessionNotEnforcedForOtherAgents() {
+        let stored = SessionRecord(sessionID: "sess-1", permissionMode: .edits)
+        let resolved = ChatListener.resolveResumedSession(
+            stored: stored, requestedMode: .readOnly, isNewSession: false, enforceMode: false
+        )
+        XCTAssertEqual(resolved.sessionID, "sess-1")
+        XCTAssertFalse(resolved.startedNew)
+    }
+
+    func testResolveResumedSessionNewFlagStartsNew() {
+        let stored = SessionRecord(sessionID: "sess-1", permissionMode: .readOnly)
+        let resolved = ChatListener.resolveResumedSession(
+            stored: stored, requestedMode: .readOnly, isNewSession: true, enforceMode: true
+        )
+        XCTAssertNil(resolved.sessionID)
+        XCTAssertTrue(resolved.startedNew)
+    }
+
+    // MARK: - CHAT-12: Cursor confined modes
+
+    func testCursorTurnRunnerDefaultIsPlanMode() {
+        let runner = CursorTurnRunner()
+        let options = ChatListenOptions(allowEdits: false, workingDir: "/tmp/work")
+        let args = runner.buildArguments(prompt: "Hello", sessionID: nil, options: options)
+        XCTAssertTrue(args.contains("--mode"))
+        XCTAssertEqual(args[args.firstIndex(of: "--mode")! + 1], "plan")
+        XCTAssertFalse(args.contains("-f"))
+    }
+
+    func testCursorTurnRunnerUnrestrictedUsesForce() {
+        let runner = CursorTurnRunner()
+        var options = ChatListenOptions(allowEdits: true, workingDir: "/tmp/work")
+        options.unrestricted = true
+        let args = runner.buildArguments(prompt: "Hello", sessionID: nil, options: options)
+        XCTAssertTrue(args.contains("-f"))
+        XCTAssertFalse(args.contains("--mode"))
+    }
+
+    func testCursorAllowEditsWithoutUnrestrictedRefuses() {
+        var options = ChatListenOptions(workingDir: "/tmp/work")
+        options.allowEdits = true
+        options.unrestricted = false
+        XCTAssertThrowsError(try ChatListener.validateOptions(agent: .cursor, options: options)) { error in
+            let cliError = error as? CLIError
+            XCTAssertEqual(cliError?.commandError.code, .usage)
+            XCTAssertTrue(cliError?.commandError.message.contains("--unrestricted") ?? false)
+        }
+    }
+
+    func testCursorUnrestrictedPassesValidation() throws {
+        var options = ChatListenOptions(workingDir: "/tmp/work")
+        options.allowEdits = true
+        options.unrestricted = true
+        XCTAssertNoThrow(try ChatListener.validateOptions(agent: .cursor, options: options))
+    }
+
+    func testClaudeAllowEditsPassesValidation() throws {
+        var options = ChatListenOptions(workingDir: "/tmp/work")
+        options.allowEdits = true
+        XCTAssertNoThrow(try ChatListener.validateOptions(agent: .claude, options: options))
+    }
+
+    func testParseChatListenOptionsUnrestricted() throws {
+        let (showHelp, options) = try CLI.parseChatListenOptions(args: ["--agent", "cursor", "--unrestricted"], isJSON: false)
+        XCTAssertFalse(showHelp)
+        XCTAssertTrue(options.unrestricted)
+    }
+
+    func testUnrestrictedNoticeOnlyForCursorUnrestrictedFirstReply() {
+        XCTAssertNil(ChatListener.unrestrictedNotice(agent: .cursor, unrestricted: false, isFirstReply: true))
+        XCTAssertNil(ChatListener.unrestrictedNotice(agent: .cursor, unrestricted: true, isFirstReply: false))
+        XCTAssertNil(ChatListener.unrestrictedNotice(agent: .claude, unrestricted: true, isFirstReply: true))
+        let notice = ChatListener.unrestrictedNotice(agent: .cursor, unrestricted: true, isFirstReply: true)
+        XCTAssertTrue(notice?.contains("unrestricted") ?? false)
+        XCTAssertTrue(notice?.contains("any command") ?? false)
+    }
+
+    // MARK: - CHAT-12: per-agent capabilities and Codex guidance
+
+    func testCapabilitySummaryPerAgent() {
+        let claudeDefault = ChatListener.capabilitySummary(agent: .claude, allowEdits: false, unrestricted: false)
+        XCTAssertTrue(claudeDefault.contains("read-only"))
+        XCTAssertTrue(claudeDefault.contains("simulator"))
+
+        let codexDefault = ChatListener.capabilitySummary(agent: .codex, allowEdits: false, unrestricted: false)
+        XCTAssertTrue(codexDefault.contains("read-only"))
+
+        let cursorDefault = ChatListener.capabilitySummary(agent: .cursor, allowEdits: false, unrestricted: false)
+        XCTAssertTrue(cursorDefault.contains("plan"))
+        XCTAssertFalse(cursorDefault.contains("simulator tools (MCP)"))
+
+        let cursorUnrestricted = ChatListener.capabilitySummary(agent: .cursor, allowEdits: true, unrestricted: true)
+        XCTAssertTrue(cursorUnrestricted.contains("UNRESTRICTED"))
+    }
+
+    func testCodexTurnPromptIncludesSimulatorToolGuidance() {
+        let prompt = CodexTurnRunner.turnPrompt("how many sims are booted?")
+        XCTAssertTrue(prompt.contains("how many sims are booted?"))
+        XCTAssertTrue(prompt.contains("cosmokit"))
+        XCTAssertTrue(prompt.lowercased().contains("mcp"))
     }
 
     func testCursorMCPCheck() throws {

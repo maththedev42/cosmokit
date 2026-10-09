@@ -13,6 +13,7 @@ public struct ChatListenOptions {
     public var isNewSession: Bool
     public var model: String?
     public var allowEdits: Bool
+    public var unrestricted: Bool
     public var timeout: TimeInterval
     public var agent: String?
     public var isJSON: Bool
@@ -23,6 +24,7 @@ public struct ChatListenOptions {
         isNewSession: Bool = false,
         model: String? = nil,
         allowEdits: Bool = false,
+        unrestricted: Bool = false,
         timeout: TimeInterval = 600,
         agent: String? = nil,
         isJSON: Bool = false,
@@ -32,11 +34,47 @@ public struct ChatListenOptions {
         self.isNewSession = isNewSession
         self.model = model
         self.allowEdits = allowEdits
+        self.unrestricted = unrestricted
         self.timeout = timeout
         self.agent = agent
         self.isJSON = isJSON
         self.workingDir = workingDir
         self.mcpConfigPath = mcpConfigPath
+    }
+}
+
+/// File-write permission the listener requested. Codex sessions keep the
+/// sandbox they were created with across `exec resume`, so the requested
+/// mode is stored alongside the session id and a changed mode starts a new
+/// session instead of silently keeping (or losing) write access.
+public enum PermissionMode: String, Equatable {
+    case readOnly = "read-only"
+    case edits = "edits"
+
+    public init(allowEdits: Bool) {
+        self = allowEdits ? .edits : .readOnly
+    }
+}
+
+public struct SessionRecord: Equatable {
+    public let sessionID: String
+    public let permissionMode: PermissionMode?
+
+    public init(sessionID: String, permissionMode: PermissionMode?) {
+        self.sessionID = sessionID
+        self.permissionMode = permissionMode
+    }
+}
+
+public struct ResumedSession: Equatable {
+    public let sessionID: String?
+    public let startedNew: Bool
+    public let note: String?
+
+    public init(sessionID: String?, startedNew: Bool, note: String?) {
+        self.sessionID = sessionID
+        self.startedNew = startedNew
+        self.note = note
     }
 }
 
@@ -129,23 +167,35 @@ public final class SessionStore {
     }
 
     public func loadSessionID(for threadID: UUID) -> String? {
+        loadSessionRecord(for: threadID)?.sessionID
+    }
+
+    public func loadSessionRecord(for threadID: UUID) -> SessionRecord? {
         let file = directoryURL.appendingPathComponent("\(threadID.uuidString).json")
         guard let data = try? Data(contentsOf: file),
               let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
               let sessionID = json["sessionId"] as? String, !sessionID.isEmpty else {
             return nil
         }
-        return sessionID
+        let mode = (json["permissionMode"] as? String).flatMap(PermissionMode.init(rawValue:))
+        return SessionRecord(sessionID: sessionID, permissionMode: mode)
     }
 
     public func saveSessionID(_ sessionID: String, for threadID: UUID) {
+        saveSession(SessionRecord(sessionID: sessionID, permissionMode: nil), for: threadID)
+    }
+
+    public func saveSession(_ record: SessionRecord, for threadID: UUID) {
         try? FileManager.default.createDirectory(at: directoryURL, withIntermediateDirectories: true)
         let file = directoryURL.appendingPathComponent("\(threadID.uuidString).json")
-        let payload: [String: Any] = [
+        var payload: [String: Any] = [
             "threadId": threadID.uuidString,
-            "sessionId": sessionID,
+            "sessionId": record.sessionID,
             "updatedAt": ISO8601DateFormatter().string(from: Date())
         ]
+        if let mode = record.permissionMode {
+            payload["permissionMode"] = mode.rawValue
+        }
         if let data = try? JSONSerialization.data(withJSONObject: payload, options: [.sortedKeys, .prettyPrinted]) {
             try? data.write(to: file, options: .atomic)
         }
@@ -569,6 +619,12 @@ public final class CodexTurnRunner: AgentTurnRunner {
         self.cosmokitPath = cosmokitPath
     }
 
+    /// Appends an instruction telling Codex to use the injected cosmokit MCP
+    /// tools for simulator questions instead of shelling out to simctl.
+    public static func turnPrompt(_ prompt: String) -> String {
+        prompt + "\n\nFor anything about the iOS Simulator, prefer the cosmokit MCP tools (for example list_simulators) over shell commands such as xcrun simctl."
+    }
+
     public func buildArguments(
         prompt: String,
         sessionID: String?,
@@ -620,7 +676,8 @@ public final class CodexTurnRunner: AgentTurnRunner {
         let lastMsgFile = tempDir.appendingPathComponent("last_message.txt")
 
         let bin = cosmokitPath ?? ChatListener.resolveCosmokitBinaryPath()
-        let args = buildArguments(prompt: prompt, sessionID: sessionID, options: options, outputFilePath: lastMsgFile.path, cosmokitBinary: bin)
+        let guidedPrompt = Self.turnPrompt(prompt)
+        let args = buildArguments(prompt: guidedPrompt, sessionID: sessionID, options: options, outputFilePath: lastMsgFile.path, cosmokitBinary: bin)
         let outcome = try processRunner(executable, args, options.timeout)
 
         if outcome.timedOut {
@@ -637,7 +694,7 @@ public final class CodexTurnRunner: AgentTurnRunner {
         // Check if resume failed because the session no longer exists
         if outcome.exitCode != 0 && sessionID != nil {
             if isSessionNotFoundError(combined) {
-                let freshArgs = buildArguments(prompt: prompt, sessionID: nil, options: options, outputFilePath: lastMsgFile.path, cosmokitBinary: bin)
+                let freshArgs = buildArguments(prompt: guidedPrompt, sessionID: nil, options: options, outputFilePath: lastMsgFile.path, cosmokitBinary: bin)
                 let freshOutcome = try processRunner(executable, freshArgs, options.timeout)
                 if freshOutcome.exitCode == 0, let parsed = parseOutput(stdout: freshOutcome.stdout, outputFile: lastMsgFile, fallbackSessionID: nil) {
                     let prefixedReply = "Previous session expired or could not be resumed. Started a new session.\n\n\(parsed.reply)"
@@ -873,10 +930,10 @@ public final class CursorTurnRunner: AgentTurnRunner {
             "--workspace", options.workingDir
         ]
 
-        if options.allowEdits {
+        if options.unrestricted {
             args += ["-f"]
         } else {
-            args += ["--mode", "ask"]
+            args += ["--mode", "plan"]
         }
 
         if let model = options.model, !model.isEmpty {
@@ -1223,6 +1280,67 @@ public enum ChatListener {
         return (tempDir, configFile)
     }
 
+    /// Decides whether the saved agent session can be resumed. Codex keeps
+    /// the sandbox its session was created with across `exec resume`, so a
+    /// changed (or untracked legacy) permission mode starts a new session
+    /// instead of silently keeping or losing write access. Other agents take
+    /// their permissions from flags on every run, so no enforcement there.
+    public static func resolveResumedSession(
+        stored: SessionRecord?,
+        requestedMode: PermissionMode,
+        isNewSession: Bool,
+        enforceMode: Bool
+    ) -> ResumedSession {
+        if isNewSession {
+            return ResumedSession(sessionID: nil, startedNew: true, note: nil)
+        }
+        guard let stored else {
+            return ResumedSession(sessionID: nil, startedNew: true, note: nil)
+        }
+        if enforceMode && stored.permissionMode != requestedMode {
+            let was = stored.permissionMode?.rawValue ?? "untracked (predates permission tracking)"
+            let note = "Session permission mode changed (was \(was), now \(requestedMode.rawValue); started a new session."
+            return ResumedSession(sessionID: nil, startedNew: true, note: note)
+        }
+        return ResumedSession(sessionID: stored.sessionID, startedNew: false, note: nil)
+    }
+
+    /// Refuses flag combinations that would silently grant more access than
+    /// promised. `--allow-edits` maps to Cursor's `-f`/`--yolo` (run
+    /// everything: any command, writes anywhere), so with Cursor it requires
+    /// the explicit `--unrestricted` opt-in.
+    public static func validateOptions(agent: SupportedAgent, options: ChatListenOptions) throws {
+        if agent == .cursor && options.allowEdits && !options.unrestricted {
+            throw CLIError(commandError: CommandError(
+                code: .usage,
+                message: "--allow-edits is not supported with Cursor: it maps to Cursor's -f/--yolo (run everything: any command, writes anywhere the user can). Refusing to start. Pass --unrestricted to explicitly allow this, or run without --allow-edits for plan mode (no writes, answers only; simulator tools unavailable)."
+            ))
+        }
+    }
+
+    /// Short per-agent capability text for the startup line: what the chosen
+    /// agent can actually do, not a generic promise.
+    public static func capabilitySummary(agent: SupportedAgent, allowEdits: Bool, unrestricted: Bool) -> String {
+        switch agent {
+        case .claude:
+            return allowEdits ? "simulator + edits allowed" : "simulator + read-only"
+        case .codex:
+            return allowEdits ? "edits allowed, simulator via shell (MCP tools not verified)" : "read-only, simulator via shell (MCP tools not verified)"
+        case .cursor:
+            if unrestricted {
+                return "UNRESTRICTED: any command, writes anywhere the user can"
+            }
+            return "plan mode: no writes, answers only, no simulator tools"
+        }
+    }
+
+    /// One-time notice prepended to the first reply of a Cursor unrestricted
+    /// session, so the run-everything scope is stated in the conversation.
+    public static func unrestrictedNotice(agent: SupportedAgent, unrestricted: Bool, isFirstReply: Bool) -> String? {
+        guard agent == .cursor, unrestricted, isFirstReply else { return nil }
+        return "Note: this session is unrestricted — I can run any command and write anywhere you can."
+    }
+
     public static func formatPrompt(messages: [ChatMessageWire]) -> String {
         messages.map { msg in
             var parts: [String] = []
@@ -1283,6 +1401,7 @@ public enum ChatListener {
 
         var effectiveOptions = options
         effectiveOptions.agent = resolution.agent.rawValue
+        try validateOptions(agent: resolution.agent, options: effectiveOptions)
         var tempDirToRemove: URL?
 
         if resolution.agent == .claude && effectiveOptions.mcpConfigPath == nil {
@@ -1374,20 +1493,29 @@ public enum ChatListener {
             heartbeatTimer.cancel()
         }
 
-        // Resolve session ID
-        var currentSessionID: String?
-        if options.isNewSession {
+        // Resolve session ID. Codex keeps the sandbox its session was created
+        // with across `exec resume`, so a changed permission mode starts a new
+        // session instead of silently keeping or losing write access.
+        let requestedMode = PermissionMode(allowEdits: effectiveOptions.allowEdits)
+        let storedRecord = sessionStore.loadSessionRecord(for: threadID)
+        let resolvedSession = resolveResumedSession(
+            stored: storedRecord,
+            requestedMode: requestedMode,
+            isNewSession: options.isNewSession,
+            enforceMode: resolution.agent == .codex
+        )
+        if resolvedSession.startedNew {
             sessionStore.clearSessionID(for: threadID)
-            currentSessionID = nil
-        } else {
-            currentSessionID = sessionStore.loadSessionID(for: threadID)
         }
+        var currentSessionID = resolvedSession.sessionID
+        let sessionNote = resolvedSession.note
 
         // Startup terminal output
-        let toolSummary = options.allowEdits ? "simulator + edits allowed" : "simulator + read-only"
+        let toolSummary = capabilitySummary(agent: resolution.agent, allowEdits: effectiveOptions.allowEdits, unrestricted: effectiveOptions.unrestricted)
         let threadPrefix = String(threadID.uuidString.prefix(8))
         let sessionSummary = currentSessionID.map { "session \($0)" } ?? "new session"
         let agentSummary = "\(resolution.agent.rawValue) (\(resolution.source))"
+        let noteSuffix = sessionNote.map { ". \($0)" } ?? ""
 
         if options.isJSON {
             var startPayload: [String: Any] = [
@@ -1399,12 +1527,14 @@ public enum ChatListener {
                 "tools": toolSummary
             ]
             if let sid = currentSessionID { startPayload["sessionId"] = sid }
+            if let note = sessionNote { startPayload["sessionNote"] = note }
             emitJSON(startPayload)
         } else {
-            print("cosmokit chat listen: agent \(agentSummary), thread \(threadPrefix), \(sessionSummary), tools: \(toolSummary)")
+            print("cosmokit chat listen: agent \(agentSummary), thread \(threadPrefix), \(sessionSummary), tools: \(toolSummary)\(noteSuffix)")
         }
 
         // Long-poll loop
+        var isFirstReply = true
         while true {
             let messages: [ChatMessageWire]
             do {
@@ -1460,21 +1590,29 @@ public enum ChatListener {
             // Update session ID if available
             if let newSessionID = turnResult.sessionID, !newSessionID.isEmpty {
                 currentSessionID = newSessionID
-                sessionStore.saveSessionID(newSessionID, for: threadID)
+                sessionStore.saveSession(SessionRecord(sessionID: newSessionID, permissionMode: requestedMode), for: threadID)
             }
 
+            // The first reply of a Cursor unrestricted session states the
+            // run-everything scope in the conversation itself.
+            var postedReply = turnResult.reply
+            if let notice = unrestrictedNotice(agent: resolution.agent, unrestricted: effectiveOptions.unrestricted, isFirstReply: isFirstReply) {
+                postedReply = notice + "\n\n" + postedReply
+            }
+            isFirstReply = false
+
             // Post reply back to CosmoKit
-            _ = try? client.reply(turnResult.reply)
+            _ = try? client.reply(postedReply)
 
             // Log reply event
-            let replyPreview = turnResult.reply.prefix(80).replacingOccurrences(of: "\n", with: " ")
+            let replyPreview = postedReply.prefix(80).replacingOccurrences(of: "\n", with: " ")
             let turnsCount = turnResult.numTurns ?? 1
             if options.isJSON {
                 var replyPayload: [String: Any] = [
                     "event": "reply",
                     "durationSec": Double(round(elapsedSeconds * 10) / 10),
                     "turns": turnsCount,
-                    "text": turnResult.reply,
+                    "text": postedReply,
                     "isError": turnResult.isError
                 ]
                 if let sid = currentSessionID { replyPayload["sessionId"] = sid }
