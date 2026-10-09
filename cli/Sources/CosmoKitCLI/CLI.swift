@@ -1389,9 +1389,10 @@ public enum CLI {
           Agent capabilities (measured wall time per reply in parentheses):
             claude    default read-only + simulator tools; --allow-edits
                       adds edits (~5s)
-            codex     default read-only sandbox, simulator via shell;
-                      --allow-edits adds workspace writes, kept per session
-                      and re-checked on resume (~35-58s)
+            codex     default read-only sandbox; answers simulator questions
+                      with xcrun simctl in the shell; the cosmokit MCP tools
+                      were not observed being called; --allow-edits adds workspace
+                      writes, kept per session and re-checked on resume (~35-58s)
             cursor    default plan mode: no writes, answers only, no
                       simulator tools (~75s, most of it Cursor startup);
                       --allow-edits is refused; --unrestricted allows

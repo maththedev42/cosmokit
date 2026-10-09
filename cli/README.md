@@ -433,11 +433,11 @@ cosmokit chat listen
 - Select an explicit agent with `--agent <claude|codex|cursor>` or the `COSMOKIT_AGENT` environment variable.
 - What each agent can do (measured wall time per reply in parentheses):
   - `claude`: default read-only file access plus simulator control tools (MCP); `--allow-edits` permits edits, writes and commands (~5s).
-  - `codex`: default read-only sandbox; simulator questions are answered from the shell because MCP tool calls could not be verified live. `--allow-edits` permits workspace writes; the mode is stored with the session, and a changed mode starts a new session on resume (~35–58s).
+  - `codex`: default read-only sandbox; answers simulator questions with `xcrun simctl` in the shell; the cosmokit MCP tools were not observed being called. `--allow-edits` permits workspace writes; the mode is stored with the session, and a changed mode starts a new session on resume (~35–58s).
   - `cursor`: default plan mode — no file writes, answers only, and no simulator tools (MCP calls are rejected even when approved). `--allow-edits` alone refuses to start because it maps to Cursor's `-f`/`--yolo` (run everything: any command, writes anywhere); pass `--unrestricted` to explicitly allow that, which is stated at startup and in the session's first reply (~75s per reply, most of it Cursor's own startup).
 - The conversation session persists across listener restarts; use `--new` to start fresh.
 - Output is line-buffered so redirects to files (`> listen.log`) or pipes (`| tee`) flush immediately.
-- For Cursor, simulator control tools are unavailable in every mode (MCP calls are rejected even with `--approve-mcps` and a configured `cosmokit` server), so the listener does not depend on `~/.cursor/mcp.json` or `.cursor/mcp.json`.
+- For Cursor, simulator control tools are unavailable in the default mode (MCP calls are rejected even with `--approve-mcps` and a configured `cosmokit` server), so the listener does not depend on `~/.cursor/mcp.json` or `.cursor/mcp.json`.
 
 ### Proxy boundary
 

@@ -1299,7 +1299,7 @@ public enum ChatListener {
         }
         if enforceMode && stored.permissionMode != requestedMode {
             let was = stored.permissionMode?.rawValue ?? "untracked (predates permission tracking)"
-            let note = "Session permission mode changed (was \(was), now \(requestedMode.rawValue); started a new session."
+            let note = "Session permission mode changed (was \(was), now \(requestedMode.rawValue)); started a new session."
             return ResumedSession(sessionID: nil, startedNew: true, note: note)
         }
         return ResumedSession(sessionID: stored.sessionID, startedNew: false, note: nil)
@@ -1325,7 +1325,7 @@ public enum ChatListener {
         case .claude:
             return allowEdits ? "simulator + edits allowed" : "simulator + read-only"
         case .codex:
-            return allowEdits ? "edits allowed, simulator via shell (MCP tools not verified)" : "read-only, simulator via shell (MCP tools not verified)"
+            return allowEdits ? "edits allowed; answers simulator questions with xcrun simctl in shell (cosmokit MCP tools not observed being called)" : "read-only; answers simulator questions with xcrun simctl in shell (cosmokit MCP tools not observed being called)"
         case .cursor:
             if unrestricted {
                 return "UNRESTRICTED: any command, writes anywhere the user can"
