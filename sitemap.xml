@@ -1,77 +1,137 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">
 <url>
 <loc>https://usecosmoskittool.com/en/</loc>
+<xhtml:link rel="alternate" hreflang="en" href="https://usecosmoskittool.com/en/" />
+<xhtml:link rel="alternate" hreflang="pt-BR" href="https://usecosmoskittool.com/pt-BR/" />
+<xhtml:link rel="alternate" hreflang="es" href="https://usecosmoskittool.com/es/" />
+<xhtml:link rel="alternate" hreflang="x-default" href="https://usecosmoskittool.com/en/" />
 <changefreq>weekly</changefreq>
 <priority>1</priority>
 </url>
 <url>
 <loc>https://usecosmoskittool.com/en/privacy/</loc>
+<xhtml:link rel="alternate" hreflang="en" href="https://usecosmoskittool.com/en/privacy/" />
+<xhtml:link rel="alternate" hreflang="pt-BR" href="https://usecosmoskittool.com/pt-BR/privacy/" />
+<xhtml:link rel="alternate" hreflang="es" href="https://usecosmoskittool.com/es/privacy/" />
+<xhtml:link rel="alternate" hreflang="x-default" href="https://usecosmoskittool.com/en/privacy/" />
 <changefreq>monthly</changefreq>
 <priority>0.4</priority>
 </url>
 <url>
 <loc>https://usecosmoskittool.com/en/terms/</loc>
+<xhtml:link rel="alternate" hreflang="en" href="https://usecosmoskittool.com/en/terms/" />
+<xhtml:link rel="alternate" hreflang="pt-BR" href="https://usecosmoskittool.com/pt-BR/terms/" />
+<xhtml:link rel="alternate" hreflang="es" href="https://usecosmoskittool.com/es/terms/" />
+<xhtml:link rel="alternate" hreflang="x-default" href="https://usecosmoskittool.com/en/terms/" />
 <changefreq>monthly</changefreq>
 <priority>0.4</priority>
 </url>
 <url>
 <loc>https://usecosmoskittool.com/en/support/</loc>
+<xhtml:link rel="alternate" hreflang="en" href="https://usecosmoskittool.com/en/support/" />
+<xhtml:link rel="alternate" hreflang="pt-BR" href="https://usecosmoskittool.com/pt-BR/support/" />
+<xhtml:link rel="alternate" hreflang="es" href="https://usecosmoskittool.com/es/support/" />
+<xhtml:link rel="alternate" hreflang="x-default" href="https://usecosmoskittool.com/en/support/" />
 <changefreq>monthly</changefreq>
 <priority>0.4</priority>
 </url>
 <url>
 <loc>https://usecosmoskittool.com/en/suggest/</loc>
+<xhtml:link rel="alternate" hreflang="en" href="https://usecosmoskittool.com/en/suggest/" />
+<xhtml:link rel="alternate" hreflang="pt-BR" href="https://usecosmoskittool.com/pt-BR/suggest/" />
+<xhtml:link rel="alternate" hreflang="es" href="https://usecosmoskittool.com/es/suggest/" />
+<xhtml:link rel="alternate" hreflang="x-default" href="https://usecosmoskittool.com/en/suggest/" />
 <changefreq>monthly</changefreq>
 <priority>0.4</priority>
 </url>
 <url>
 <loc>https://usecosmoskittool.com/pt-BR/</loc>
+<xhtml:link rel="alternate" hreflang="en" href="https://usecosmoskittool.com/en/" />
+<xhtml:link rel="alternate" hreflang="pt-BR" href="https://usecosmoskittool.com/pt-BR/" />
+<xhtml:link rel="alternate" hreflang="es" href="https://usecosmoskittool.com/es/" />
+<xhtml:link rel="alternate" hreflang="x-default" href="https://usecosmoskittool.com/en/" />
 <changefreq>weekly</changefreq>
 <priority>1</priority>
 </url>
 <url>
 <loc>https://usecosmoskittool.com/pt-BR/privacy/</loc>
+<xhtml:link rel="alternate" hreflang="en" href="https://usecosmoskittool.com/en/privacy/" />
+<xhtml:link rel="alternate" hreflang="pt-BR" href="https://usecosmoskittool.com/pt-BR/privacy/" />
+<xhtml:link rel="alternate" hreflang="es" href="https://usecosmoskittool.com/es/privacy/" />
+<xhtml:link rel="alternate" hreflang="x-default" href="https://usecosmoskittool.com/en/privacy/" />
 <changefreq>monthly</changefreq>
 <priority>0.4</priority>
 </url>
 <url>
 <loc>https://usecosmoskittool.com/pt-BR/terms/</loc>
+<xhtml:link rel="alternate" hreflang="en" href="https://usecosmoskittool.com/en/terms/" />
+<xhtml:link rel="alternate" hreflang="pt-BR" href="https://usecosmoskittool.com/pt-BR/terms/" />
+<xhtml:link rel="alternate" hreflang="es" href="https://usecosmoskittool.com/es/terms/" />
+<xhtml:link rel="alternate" hreflang="x-default" href="https://usecosmoskittool.com/en/terms/" />
 <changefreq>monthly</changefreq>
 <priority>0.4</priority>
 </url>
 <url>
 <loc>https://usecosmoskittool.com/pt-BR/support/</loc>
+<xhtml:link rel="alternate" hreflang="en" href="https://usecosmoskittool.com/en/support/" />
+<xhtml:link rel="alternate" hreflang="pt-BR" href="https://usecosmoskittool.com/pt-BR/support/" />
+<xhtml:link rel="alternate" hreflang="es" href="https://usecosmoskittool.com/es/support/" />
+<xhtml:link rel="alternate" hreflang="x-default" href="https://usecosmoskittool.com/en/support/" />
 <changefreq>monthly</changefreq>
 <priority>0.4</priority>
 </url>
 <url>
 <loc>https://usecosmoskittool.com/pt-BR/suggest/</loc>
+<xhtml:link rel="alternate" hreflang="en" href="https://usecosmoskittool.com/en/suggest/" />
+<xhtml:link rel="alternate" hreflang="pt-BR" href="https://usecosmoskittool.com/pt-BR/suggest/" />
+<xhtml:link rel="alternate" hreflang="es" href="https://usecosmoskittool.com/es/suggest/" />
+<xhtml:link rel="alternate" hreflang="x-default" href="https://usecosmoskittool.com/en/suggest/" />
 <changefreq>monthly</changefreq>
 <priority>0.4</priority>
 </url>
 <url>
 <loc>https://usecosmoskittool.com/es/</loc>
+<xhtml:link rel="alternate" hreflang="en" href="https://usecosmoskittool.com/en/" />
+<xhtml:link rel="alternate" hreflang="pt-BR" href="https://usecosmoskittool.com/pt-BR/" />
+<xhtml:link rel="alternate" hreflang="es" href="https://usecosmoskittool.com/es/" />
+<xhtml:link rel="alternate" hreflang="x-default" href="https://usecosmoskittool.com/en/" />
 <changefreq>weekly</changefreq>
 <priority>1</priority>
 </url>
 <url>
 <loc>https://usecosmoskittool.com/es/privacy/</loc>
+<xhtml:link rel="alternate" hreflang="en" href="https://usecosmoskittool.com/en/privacy/" />
+<xhtml:link rel="alternate" hreflang="pt-BR" href="https://usecosmoskittool.com/pt-BR/privacy/" />
+<xhtml:link rel="alternate" hreflang="es" href="https://usecosmoskittool.com/es/privacy/" />
+<xhtml:link rel="alternate" hreflang="x-default" href="https://usecosmoskittool.com/en/privacy/" />
 <changefreq>monthly</changefreq>
 <priority>0.4</priority>
 </url>
 <url>
 <loc>https://usecosmoskittool.com/es/terms/</loc>
+<xhtml:link rel="alternate" hreflang="en" href="https://usecosmoskittool.com/en/terms/" />
+<xhtml:link rel="alternate" hreflang="pt-BR" href="https://usecosmoskittool.com/pt-BR/terms/" />
+<xhtml:link rel="alternate" hreflang="es" href="https://usecosmoskittool.com/es/terms/" />
+<xhtml:link rel="alternate" hreflang="x-default" href="https://usecosmoskittool.com/en/terms/" />
 <changefreq>monthly</changefreq>
 <priority>0.4</priority>
 </url>
 <url>
 <loc>https://usecosmoskittool.com/es/support/</loc>
+<xhtml:link rel="alternate" hreflang="en" href="https://usecosmoskittool.com/en/support/" />
+<xhtml:link rel="alternate" hreflang="pt-BR" href="https://usecosmoskittool.com/pt-BR/support/" />
+<xhtml:link rel="alternate" hreflang="es" href="https://usecosmoskittool.com/es/support/" />
+<xhtml:link rel="alternate" hreflang="x-default" href="https://usecosmoskittool.com/en/support/" />
 <changefreq>monthly</changefreq>
 <priority>0.4</priority>
 </url>
 <url>
 <loc>https://usecosmoskittool.com/es/suggest/</loc>
+<xhtml:link rel="alternate" hreflang="en" href="https://usecosmoskittool.com/en/suggest/" />
+<xhtml:link rel="alternate" hreflang="pt-BR" href="https://usecosmoskittool.com/pt-BR/suggest/" />
+<xhtml:link rel="alternate" hreflang="es" href="https://usecosmoskittool.com/es/suggest/" />
+<xhtml:link rel="alternate" hreflang="x-default" href="https://usecosmoskittool.com/en/suggest/" />
 <changefreq>monthly</changefreq>
 <priority>0.4</priority>
 </url>
