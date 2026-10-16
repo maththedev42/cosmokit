@@ -28,12 +28,12 @@ export function Navbar() {
   const [langOpen, setLangOpen] = useState(false);
 
   const navLinks = [
-    { name: t("features"), href: `/${locale}#features` },
-    { name: t("screenshots"), href: `/${locale}#gallery` },
-    { name: t("pricing"), href: `/${locale}#pricing` },
-    { name: t("faq"), href: `/${locale}#faq` },
-    { name: t("support"), href: `/${locale}/support` },
-    { name: t("suggest"), href: `/${locale}/suggest`, accent: true as const },
+    { name: t("features"), href: `/${locale}/#features` },
+    { name: t("screenshots"), href: `/${locale}/#gallery` },
+    { name: t("pricing"), href: `/${locale}/#pricing` },
+    { name: t("faq"), href: `/${locale}/#faq` },
+    { name: t("support"), href: `/${locale}/support/` },
+    { name: t("suggest"), href: `/${locale}/suggest/`, accent: true as const },
   ];
 
   useEffect(() => {
@@ -62,7 +62,7 @@ export function Navbar() {
       }`}
     >
       <div className="container mx-auto flex items-center justify-between h-16 px-4">
-        <Link href={`/${locale}`} className="flex items-center gap-2.5 group">
+        <Link href={`/${locale}/`} className="flex items-center gap-2.5 group">
           <Image
             src="/icon.png"
             alt="CosmoKit"

@@ -11,7 +11,6 @@ export function ScreenshotsGallery() {
   const t = useTranslations("Gallery");
   
   const screenshots = [
-    { src: t("images.workspace"), key: "workspace" },
     { src: t("images.location"), key: "location" },
     { src: t("images.tools"), key: "tools" },
     { src: t("images.push"), key: "push" },

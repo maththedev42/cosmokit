@@ -17,18 +17,18 @@
   },
   "Hero": {
     "badge": "Available on the Mac App Store",
-    "title1": "Supercharge your",
-    "title2": "workflow",
-    "description": "Stop typing xcrun simctl. CosmoKit puts screenshots, video recording, push notifications, deep links, GPS routes and a network proxy for the iOS Simulator in one native Mac app.",
+    "title1": "The iOS Simulator",
+    "title2": "toolkit for Mac",
+    "description": "HTTPS proxy with mocking and throttling, real push to devices, and AI agents driving the Simulator over MCP. One native Mac app, no SDK needed.",
     "terminalHint": "Replace {command} with a GUI",
     "ctaDownload": "Download for macOS",
     "ctaFeatures": "Explore Features",
     "subtext": "Free tier available · macOS 14.7+ · Requires Xcode",
     "heroImage": "/screenshots/store/en/overview.webp",
-    "heroImageAlt": "CosmoKit's main workspace visual showing the native macOS control panel, simulator tools, and the ultimate productivity dashboard for iOS developers"
+    "heroImageAlt": "CosmoKit, the iOS Simulator toolkit for Mac, with its deep links and camera capture panels docked beside the iOS Simulator"
   },
   "MacOnly": {
-    "body": "CosmoKit is a Mac app. It needs macOS 14 or later, Xcode and the iOS Simulator, so it will not run on this device.",
+    "body": "CosmoKit is a Mac app. It needs macOS 14.7 or later, Xcode and the iOS Simulator, so it will not run on this device.",
     "copyLink": "Copy the link for your Mac",
     "copied": "Link copied",
     "copyFallback": "Copy this link and open it on your Mac:"
@@ -122,7 +122,7 @@
       },
       "ai": {
         "title": "Works with your AI agent",
-        "description": "Run cosmokit mcp and any MCP client, such as Claude Code or Cursor, discovers 56 simulator tools it can call with typed arguments: install and launch apps, capture screenshots and video, replay GPS routes, send push payloads, flip permissions, trust a debugging certificate, and read UserDefaults and logs. The agent can read the screen and tap (`ui tree` / `ui tap`) and you can watch in the browser. Every command also takes --json, so an agent that only runs shell still gets a structured result to parse instead of prose."
+        "description": "Run cosmokit mcp and any MCP client, such as Claude Code or Cursor, discovers 56 simulator tools it can call with typed arguments: install and launch apps, capture screenshots and video, replay GPS routes, send push payloads, flip permissions, trust a debugging certificate, and read UserDefaults and logs. The agent can read the screen and tap (ui tree / ui tap) and you can watch in the browser. Every command also takes --json, so an agent that only runs shell still gets a structured result to parse instead of prose."
       },
       "cli": {
         "title": "cosmokit CLI",
@@ -135,7 +135,6 @@
     "title": "See it in action",
     "subtitle": "A native macOS interface designed for speed and clarity.",
     "items": {
-      "workspace": "Supercharge Your Workflow",
       "location": "Location and Route Simulation",
       "tools": "Multiple Simulators",
       "push": "Trigger Push Payloads",
@@ -143,7 +142,6 @@
       "more": "And Much More"
     },
     "images": {
-      "workspace": "/screenshots/store/en/overview.webp",
       "location": "/screenshots/store/en/location.webp",
       "tools": "/screenshots/store/en/multisim.webp",
       "push": "/screenshots/store/en/push.webp",
@@ -156,6 +154,7 @@
     "title": "Simple, {highlight} pricing",
     "titleHighlight": "transparent",
     "subtitle": "Start free, upgrade when you need more. All plans include every future update.",
+    "proIntro": "Free is yours forever: one simulator at a time, watermarked captures, a few proxy sessions to try it, and up to 5 saved push payloads, deep links and locations. Pro comes with every paid plan and lifts those limits: multiple simulators, no watermark, the network proxy with no session cap, route simulation and unlimited app profiles.",
     "free": {
       "name": "Free",
       "price": "$0",
@@ -167,7 +166,7 @@
       "name": "Monthly",
       "price": "$2.99",
       "period": "/mo",
-      "description": "3-day free trial, then $2.99/mo",
+      "description": "14-day free trial, then $2.99/mo",
       "cta": "Start Monthly"
     },
     "yearly": {
@@ -219,14 +218,15 @@
     "title2": "your workflow?",
     "subtitle": "Download CosmoKit from the Mac App Store and take full control of your iOS Simulator.",
     "cta": "Download for macOS",
-    "helperCta": "Download Proxy Helper",
+    "helperCta": "Proxy Helper (optional)",
+    "helperNote": "Optional .pkg: only needed if you want CosmoKit to set up the macOS proxy for the HTTPS proxy in one click.",
     "helperTitle": "Optional CosmoKit Proxy Helper",
     "helperDescription": "Install this signed helper to let CosmoKit configure macOS HTTP/HTTPS proxy settings in one click. Subscriptions and Pro access stay inside the Mac App Store app.",
     "info1": "macOS 14.7+",
     "info2": "Free tier available",
     "info3": "No account required",
     "cliTitle": "cosmokit CLI",
-    "cliDescription": "Scriptable access to the same simulator operations, for Makefiles, git hooks and CI, plus a built-in MCP server so an AI coding agent can discover and call them directly. Free and MIT licensed, requires macOS 13 or later, and runs without the app.",
+    "cliDescription": "Scriptable access to the same simulator operations, for Makefiles, git hooks and CI, plus a built-in MCP server so an AI coding agent can discover and call them directly. Free and MIT licensed, runs without the app, and the CLI alone supports macOS 13 or later (the app itself needs macOS 14.7).",
     "cliCta": "View on GitHub"
   },
   "FAQ": {
@@ -252,7 +252,7 @@
       },
       "q5": {
         "question": "How does billing work?",
-        "answer": "All subscriptions are managed through the Mac App Store. You can choose monthly ($2.99/mo, 3-day free trial), yearly ($19.99/yr, save 44%), or a one-time lifetime purchase ($69.99). You can cancel or switch plans anytime through your Apple ID settings. Prices vary by region. The final price is shown in the Mac App Store."
+        "answer": "All subscriptions are managed through the Mac App Store. You can choose monthly ($2.99/mo, 14-day free trial), yearly ($19.99/yr, save 44%), or a one-time lifetime purchase ($69.99). You can cancel or switch plans anytime through your Apple ID settings. Prices vary by region. The final price is shown in the Mac App Store."
       },
       "q6": {
         "question": "Is CosmoKit sandboxed?",
@@ -269,7 +269,7 @@
     }
   },
   "Footer": {
-    "description": "The ultimate macOS companion for iOS developers. Simulator testing made easy.",
+    "description": "CosmoKit is an iOS Simulator toolkit for Mac: HTTPS proxy, push notifications, screenshots, video, GPS simulation and an MCP server for AI agents.",
     "appStore": "Available on the Mac App Store",
     "product": "Product",
     "help": "Help",

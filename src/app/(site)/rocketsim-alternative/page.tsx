@@ -17,7 +17,7 @@ export const metadata: Metadata = {
   description:
     "Looking at RocketSim alternatives? CosmoKit controls the iOS Simulator with capture, push, deep links, GPS simulation, a full MITM network proxy and an App Store screenshot generator. One-time lifetime pricing available.",
   alternates: {
-    canonical: "https://usecosmoskittool.com/rocketsim-alternative",
+    canonical: "https://usecosmoskittool.com/rocketsim-alternative/",
   },
 };
 

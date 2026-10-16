@@ -7,13 +7,30 @@
 // App Store link (the only meaningful on-site conversion action) — a delegated
 // document listener so every CTA across the site is covered without touching
 // each component.
-import Script from "next/script";
 import { useEffect } from "react";
 
 const AW_ID = process.env.NEXT_PUBLIC_GOOGLE_ADS_ID ?? "AW-18227085442";
 const CONVERSION_LABEL =
   process.env.NEXT_PUBLIC_GOOGLE_ADS_CONVERSION_LABEL ?? "u_XUCJvKhYAdEIKBrfND";
 const CONVERSION_SEND_TO = `${AW_ID}/${CONVERSION_LABEL}`;
+const GTAG_SRC = `https://www.googletagmanager.com/gtag/js?id=${AW_ID}`;
+const GTAG_SCRIPT_ID = "gtag-js";
+
+// gtag.js is kept off the critical path (it costs ~150 ms of main-thread time
+// on mobile): it loads once the page is idle after `load`, the same timing as
+// next/script's lazyOnload. The inline stub below queues every gtag() call in
+// window.dataLayer until then, so nothing is lost. The exception is an App
+// Store click that happens before that: the conversion is queued, but the
+// script is fetched right away so the hit can still go out (and fire
+// event_callback) before the visitor leaves.
+function loadGtag() {
+  if (document.getElementById(GTAG_SCRIPT_ID)) return;
+  const script = document.createElement("script");
+  script.id = GTAG_SCRIPT_ID;
+  script.async = true;
+  script.src = GTAG_SRC;
+  document.head.appendChild(script);
+}
 
 export function GoogleAds() {
   useEffect(() => {
@@ -29,11 +46,24 @@ export function GoogleAds() {
       w.gtag("config", AW_ID);
     }
 
+    // Idle after load, like next/script's lazyOnload.
+    const idle = (fn: () => void) => {
+      const ric = (window as unknown as {
+        requestIdleCallback?: (cb: () => void, opts?: { timeout: number }) => number;
+      }).requestIdleCallback;
+      if (ric) ric(fn, { timeout: 3000 });
+      else window.setTimeout(fn, 1);
+    };
+    const scheduleLoad = () => idle(loadGtag);
+    if (document.readyState === "complete") scheduleLoad();
+    else window.addEventListener("load", scheduleLoad, { once: true });
+
     const onClick = (e: Event) => {
       const target = e.target as HTMLElement | null;
       const link = target?.closest?.('a[href*="apps.apple.com"]') as HTMLAnchorElement | null;
       if (!link) return;
       if (typeof w.gtag !== "function") return;
+      loadGtag();
 
       const mouseEvent = e as MouseEvent;
       const shouldHoldNavigation =
@@ -71,7 +101,10 @@ export function GoogleAds() {
       if (shouldHoldNavigation) window.setTimeout(continueNavigation, 1100);
     };
     document.addEventListener("click", onClick, true);
-    return () => document.removeEventListener("click", onClick, true);
+    return () => {
+      window.removeEventListener("load", scheduleLoad);
+      document.removeEventListener("click", onClick, true);
+    };
   }, []);
 
   return (
@@ -85,10 +118,6 @@ gtag('js', new Date());
 gtag('config', '${AW_ID}');
 // Conversion action label: ${CONVERSION_LABEL}`,
         }}
-      />
-      <Script
-        src={`https://www.googletagmanager.com/gtag/js?id=${AW_ID}`}
-        strategy="afterInteractive"
       />
     </>
   );

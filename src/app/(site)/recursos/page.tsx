@@ -14,7 +14,7 @@ export const metadata: Metadata = {
   title: "Recursos | CosmoKit para o Simulador iOS",
   description:
     "Tudo o que o CosmoKit traz para o seu fluxo no Simulador do iOS: controle do simulador, captura e gravação de tela, proxy de rede, notificações push, simulação de GPS e deep links.",
-  alternates: { canonical: "https://usecosmoskittool.com/features" },
+  alternates: { canonical: "https://usecosmoskittool.com/features/" },
 };
 
 export default function RecursosPage() {

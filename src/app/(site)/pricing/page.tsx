@@ -11,7 +11,7 @@ export const metadata: Metadata = {
   title: "Pricing | CosmoKit",
   description:
     "Start free, upgrade when you need more. CosmoKit plans: Free, Monthly $2.99, Yearly $19.99 (save 44%) and Lifetime $69.99, all managed through the Mac App Store.",
-  alternates: { canonical: "https://usecosmoskittool.com/pricing" },
+  alternates: { canonical: "https://usecosmoskittool.com/pricing/" },
 };
 
 const plans = [
@@ -141,7 +141,7 @@ export default function PricingPage() {
           ))}
         </div>
 
-        <p className="text-center text-sm text-muted-foreground/70 mt-10">
+        <p className="text-center text-sm text-muted-foreground mt-10">
           All plans are managed through the Mac App Store. Cancel or switch
           anytime.
         </p>

@@ -11,7 +11,7 @@ export const metadata: Metadata = {
   title: "Download CosmoKit for macOS",
   description:
     "Download CosmoKit free on the Mac App Store and start controlling, capturing and inspecting your iOS Simulator in seconds. Built for macOS and Xcode.",
-  alternates: { canonical: "https://usecosmoskittool.com/download" },
+  alternates: { canonical: "https://usecosmoskittool.com/download/" },
 };
 
 const requirements = [

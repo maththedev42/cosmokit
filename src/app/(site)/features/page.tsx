@@ -15,7 +15,7 @@ export const metadata: Metadata = {
   title: "Features | CosmoKit for iOS Simulator",
   description:
     "Everything CosmoKit brings to your iOS Simulator workflow: simulator control, screen capture & recording, network proxy, push notifications, GPS simulation and deep links.",
-  alternates: { canonical: "https://usecosmoskittool.com/features" },
+  alternates: { canonical: "https://usecosmoskittool.com/features/" },
 };
 
 export default function FeaturesPage() {

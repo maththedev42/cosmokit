@@ -42,7 +42,7 @@ export function PlatformDownloads() {
             {t("subtitle")}
           </p>
 
-          <div className="mx-auto grid max-w-2xl gap-4 sm:grid-cols-[1fr_0.92fr]">
+          <div className="mx-auto grid max-w-2xl gap-4 sm:grid-cols-[1fr_0.92fr] sm:items-start">
             <Button
               asChild
               size="lg"
@@ -59,6 +59,7 @@ export function PlatformDownloads() {
               </Link>
             </Button>
 
+            <div className="flex flex-col gap-2">
             <Button
               asChild
               size="lg"
@@ -70,6 +71,10 @@ export function PlatformDownloads() {
                 {t("helperCta")}
               </Link>
             </Button>
+            <p className="text-xs leading-5 text-muted-foreground">
+              {t("helperNote")}
+            </p>
+            </div>
           </div>
 
           <div className="mt-5 mx-auto max-w-2xl rounded-2xl border border-violet-DEFAULT/20 bg-card/60 p-4 text-left shadow-sm shadow-violet-DEFAULT/10 backdrop-blur-sm">
@@ -113,7 +118,7 @@ export function PlatformDownloads() {
             </div>
           </div>
 
-          <div className="mt-8 flex items-center justify-center gap-6 text-sm text-muted-foreground/60">
+          <div className="mt-8 flex items-center justify-center gap-6 text-sm text-muted-foreground">
             <span>{t("info1")}</span>
             <span className="w-1 h-1 rounded-full bg-muted-foreground/20" />
             <span>{t("info2")}</span>

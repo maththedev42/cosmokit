@@ -47,8 +47,8 @@ export function Hero() {
 
         {/* Title */}
         <motion.h1
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
+          initial={{ y: 20 }}
+          animate={{ y: 0 }}
           transition={{ duration: 0.6, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
           className="text-[2.75rem] sm:text-5xl md:text-6xl lg:text-7xl font-bold tracking-[-0.035em] text-foreground leading-[1.08]"
         >
@@ -72,13 +72,13 @@ export function Hero() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.4, delay: 0.45 }}
-          className="flex items-center justify-center gap-2 text-sm text-muted-foreground/50"
+          className="flex items-center justify-center gap-2 text-sm text-muted-foreground"
         >
           <Terminal className="h-3.5 w-3.5" />
           <span>
             {t.rich("terminalHint", {
               command: () => (
-                <code className="px-1.5 py-0.5 rounded bg-violet-DEFAULT/8 font-mono text-xs text-violet-light/70">
+                <code className="px-1.5 py-0.5 rounded bg-violet-DEFAULT/8 font-mono text-xs text-violet-light">
                   xcrun simctl
                 </code>
               ),
@@ -128,19 +128,20 @@ export function Hero() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.4, delay: 0.65 }}
-          className="text-xs text-muted-foreground/40"
+          className="text-xs text-muted-foreground"
         >
           {t("subtext")}
         </motion.p>
       </div>
 
-      {/* ─── Hero Image — full-width promo ─── */}
+      {/* ─── Hero Image — full-width promo ───
+          This image is the LCP element: it must be visible from the first
+          paint, so the entrance is a small slide only, never an opacity fade. */}
       <motion.div
-        initial={{ opacity: 0, y: 50, scale: 0.96 }}
-        animate={{ opacity: 1, y: 0, scale: 1 }}
+        initial={{ y: 24 }}
+        animate={{ y: 0 }}
         transition={{
-          duration: 1,
-          delay: 0.55,
+          duration: 0.6,
           ease: [0.22, 1, 0.36, 1],
         }}
         className="relative z-10 w-full max-w-6xl px-4"
@@ -151,6 +152,7 @@ export function Hero() {
             alt={t("heroImageAlt")}
             width={2400}
             height={1500}
+            sizes="(min-width: 1152px) 1120px, calc(100vw - 32px)"
             className="w-full h-auto"
             priority
           />

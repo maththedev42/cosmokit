@@ -44,17 +44,19 @@ export function FAQ() {
           transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
           className="max-w-3xl mx-auto"
         >
+          {/* forceMount keeps every answer in the server HTML so crawlers read it;
+              the arbitrary variant on the item hides the closed ones. */}
           <Accordion type="single" collapsible className="w-full space-y-2">
             {faqKeys.map((key, index) => (
               <AccordionItem
                 key={key}
                 value={`item-${index}`}
-                className="border border-border/60 rounded-xl px-5 data-[state=open]:bg-card/50 data-[state=open]:border-violet-DEFAULT/20 transition-colors duration-300"
+                className="border border-border/60 rounded-xl px-5 [&_[data-slot=accordion-content][data-state=closed]]:hidden data-[state=open]:bg-card/50 data-[state=open]:border-violet-DEFAULT/20 transition-colors duration-300"
               >
                 <AccordionTrigger className="text-[15px] font-medium text-foreground hover:no-underline hover:text-violet-light transition-colors py-4">
                   {t(`items.${key}.question`)}
                 </AccordionTrigger>
-                <AccordionContent className="text-sm text-muted-foreground leading-relaxed pb-4">
+                <AccordionContent forceMount className="text-sm text-muted-foreground leading-relaxed pb-4">
                   {t(`items.${key}.answer`)}
                 </AccordionContent>
               </AccordionItem>

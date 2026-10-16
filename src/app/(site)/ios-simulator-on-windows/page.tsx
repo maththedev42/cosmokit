@@ -18,7 +18,7 @@ export const metadata: Metadata = {
   description:
     "The iOS Simulator ships inside Xcode and Xcode is macOS only, so it cannot run on Windows or Linux. Here is what actually works, what does not, and what to use if you do have a Mac.",
   alternates: {
-    canonical: "https://usecosmoskittool.com/ios-simulator-on-windows",
+    canonical: "https://usecosmoskittool.com/ios-simulator-on-windows/",
   },
 };
 
