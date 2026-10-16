@@ -63,6 +63,9 @@ export function Pricing() {
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
             {t("subtitle")}
           </p>
+          <p className="text-sm text-muted-foreground/80 max-w-2xl mx-auto mt-4 leading-relaxed">
+            {t("proIntro")}
+          </p>
         </motion.div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 max-w-6xl mx-auto items-start">
@@ -87,7 +90,7 @@ export function Pricing() {
 
               {plan.badge && (
                 <Badge
-                  className={`absolute -top-2.5 left-1/2 -translate-x-1/2 text-xs px-3 py-0.5 ${
+                  className={`absolute -top-2.5 left-1/2 -translate-x-1/2 z-10 whitespace-nowrap text-xs px-3 py-0.5 ${
                     plan.highlight
                       ? "bg-violet-DEFAULT text-white border-violet-DEFAULT shadow-md shadow-violet-DEFAULT/30"
                       : "bg-violet-deep text-white border-violet-deep"

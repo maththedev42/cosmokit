@@ -55,32 +55,26 @@ interface FeatureDef {
 }
 
 const featureDefs: FeatureDef[] = [
-  // Row 1: large (2 cols) + small (1 col) = 3. Profiles leads because it is
-  { icon: Layers, key: "profiles", shot: "profiles", span: "lg", href: "/features/control-panel/" },
-  { icon: Database, key: "userdefaults", span: "sm", href: "/features/app-environment/" },
-  // Diagnostics sits between profiles and capture — it is a profile feature
-  // and the next most distinctive thing vs Xcode's scheme editor.
-  { icon: Stethoscope, key: "diagnostics", span: "sm", href: "/features/control-panel/" },
-  // Row 2: large + small = 3
-  { icon: Camera, key: "screenshot", shot: "capture", span: "lg", href: "/features/screenshots-recordings/" },
-  { icon: Bell, key: "push", span: "sm", href: "/features/push-and-deep-links/" },
-  // Row 3: large + small = 3. No shot: the store set covers stills and video in
-  // one image, which is already on the capture card above, and the old
-  // /screenshots/macos-11.png predates 4.6 and shows the retired tool strip.
-  { icon: Video, key: "video", span: "lg", href: "/features/screenshots-recordings/" },
-  { icon: Link2, key: "deeplinks", span: "sm", href: "/features/push-and-deep-links/" },
-  // Row 4: large + small = 3
-  { icon: Globe, key: "proxy", shot: "proxy", span: "lg", href: "/features/network-proxy/" },
-  { icon: MapPin, key: "gps", span: "sm", href: "/features/location/" },
-  // Row 5: large + small = 3
-  { icon: PanelTop, key: "menubar", span: "lg", href: "/features/control-panel/" },
-  { icon: ImagePlus, key: "generator", span: "sm", href: "/features/screenshots-recordings/" },
-  // Row 6: large + small = 3. The CLI pair sits last among the wide cards so
-  // the app's own panels lead and this reads as "and beyond the app".
+  // Order follows the 4.9 hero promise: AI agents over MCP, the HTTPS proxy and
+  // real push lead as the large cards, each paired with a related small card.
+  // Rows are large (2 cols) + small (1 col) = 3. The tail is small cards only:
+  // keep that count a multiple of three or the last row renders short.
   { icon: Bot, key: "ai", span: "lg", href: "/features/agentic-development/" },
   { icon: TerminalSquare, key: "cli", span: "sm", href: "/cli/" },
-  // Rows 7-9: 9 small cards = 3 full rows. Keep this a multiple of three or
-  // the last row renders short.
+  { icon: Globe, key: "proxy", shot: "proxy", span: "lg", href: "/features/network-proxy/" },
+  { icon: Link2, key: "deeplinks", span: "sm", href: "/features/push-and-deep-links/" },
+  { icon: Bell, key: "push", span: "lg", href: "/features/push-and-deep-links/" },
+  { icon: MapPin, key: "gps", span: "sm", href: "/features/location/" },
+  { icon: Layers, key: "profiles", shot: "profiles", span: "lg", href: "/features/control-panel/" },
+  { icon: Database, key: "userdefaults", span: "sm", href: "/features/app-environment/" },
+  // No shot on video: the store set covers stills and video in one image, which
+  // is already on the capture card, and the old /screenshots/macos-11.png
+  // predates 4.6 and shows the retired tool strip.
+  { icon: Camera, key: "screenshot", shot: "capture", span: "lg", href: "/features/screenshots-recordings/" },
+  { icon: Stethoscope, key: "diagnostics", span: "sm", href: "/features/control-panel/" },
+  { icon: Video, key: "video", span: "sm", href: "/features/screenshots-recordings/" },
+  { icon: PanelTop, key: "menubar", span: "sm", href: "/features/control-panel/" },
+  { icon: ImagePlus, key: "generator", span: "sm", href: "/features/screenshots-recordings/" },
   { icon: AppWindow, key: "apps", span: "sm", href: "/features/control-panel/" },
   { icon: Palette, key: "appearance", span: "sm", href: "/features/app-environment/" },
   { icon: Settings2, key: "statusbar", span: "sm", href: "/features/app-environment/" },
