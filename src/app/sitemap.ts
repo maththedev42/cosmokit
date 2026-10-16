@@ -28,8 +28,17 @@ export default function sitemap(): MetadataRoute.Sitemap {
 
   for (const locale of locales) {
     for (const page of localePages) {
+      const tail = page ? `${page}/` : "";
       entries.push({
-        url: `${SITE}/${locale}/${page ? `${page}/` : ""}`,
+        url: `${SITE}/${locale}/${tail}`,
+        alternates: {
+          languages: {
+            en: `${SITE}/en/${tail}`,
+            "pt-BR": `${SITE}/pt-BR/${tail}`,
+            es: `${SITE}/es/${tail}`,
+            "x-default": `${SITE}/en/${tail}`,
+          },
+        },
         changeFrequency: page === "" ? "weekly" : "monthly",
         priority: page === "" ? 1 : 0.4,
       });

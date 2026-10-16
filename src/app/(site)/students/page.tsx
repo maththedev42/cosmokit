@@ -10,7 +10,7 @@ export const metadata: Metadata = {
   title: "Free CosmoKit Pro for students and open source",
   description:
     "Students and open-source maintainers can get CosmoKit Pro free for a year. Send us proof of enrolment or a link to your project and we will send an App Store code.",
-  alternates: { canonical: "https://usecosmoskittool.com/students" },
+  alternates: { canonical: "https://usecosmoskittool.com/students/" },
 };
 
 const ELIGIBLE = [

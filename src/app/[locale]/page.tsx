@@ -4,7 +4,7 @@ import en from "../../../messages/en.json";
 import es from "../../../messages/es.json";
 import ptBR from "../../../messages/pt-BR.json";
 
-const SITE = "https://usecosmoskittool.com";
+import { SITE, localizedAlternates } from "@/lib/siteMetadata";
 
 const messages: Record<string, typeof en> = {
   en,
@@ -16,19 +16,19 @@ const localeMeta: Record<string, { title: string; description: string; og: strin
   en: {
     title: "CosmoKit | iOS Simulator Toolkit for Mac",
     description:
-      "Control the iOS Simulator from one native Mac app: screenshots, video recording, push notifications, deep links, GPS simulation and network proxy. Free tier available.",
+      "iOS Simulator toolkit for Mac: HTTPS proxy, real APNs push, screenshots, video, GPS and an MCP server for AI agents. Free tier.",
     og: "en_US",
   },
   "pt-BR": {
     title: "CosmoKit | Ferramentas do Simulador iOS para Mac",
     description:
-      "Controle o Simulador iOS em um app nativo para Mac: capturas de tela, gravação de vídeo, notificações push, deep links, simulação de GPS e proxy de rede. Plano gratuito disponível.",
+      "Ferramentas do Simulador iOS para Mac: proxy HTTPS, push real (APNs), capturas, vídeo, GPS e servidor MCP para agentes de IA. Plano grátis.",
     og: "pt_BR",
   },
   es: {
     title: "CosmoKit | Herramientas del Simulador iOS para Mac",
     description:
-      "Controla el Simulador iOS desde una app nativa para Mac: capturas, grabación de video, notificaciones push, deep links, simulación GPS y proxy de red. Plan gratuito disponible.",
+      "Herramientas del Simulador iOS para Mac: proxy HTTPS, push real (APNs), capturas, video, GPS y servidor MCP para agentes de IA. Plan gratis.",
     og: "es_ES",
   },
 };
@@ -46,15 +46,7 @@ export async function generateMetadata({
   return {
     title: meta.title,
     description: meta.description,
-    alternates: {
-      canonical: `${SITE}/${params.locale}/`,
-      languages: {
-        en: `${SITE}/en/`,
-        "pt-BR": `${SITE}/pt-BR/`,
-        es: `${SITE}/es/`,
-        "x-default": `${SITE}/en/`,
-      },
-    },
+    alternates: localizedAlternates(params.locale),
     openGraph: {
       title: meta.title,
       description: meta.description,

@@ -88,7 +88,7 @@ gtag('config', '${AW_ID}');
       />
       <Script
         src={`https://www.googletagmanager.com/gtag/js?id=${AW_ID}`}
-        strategy="afterInteractive"
+        strategy="lazyOnload"
       />
     </>
   );

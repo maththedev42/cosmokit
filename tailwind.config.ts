@@ -53,7 +53,7 @@ const config = {
           foreground: "hsl(var(--card-foreground))",
         },
         violet: {
-          light: "#8C4DEB",
+          light: "#A57BF2",
           DEFAULT: "#7C3AED",
           deep: "#6B33CC",
           glow: "rgba(140, 77, 235, 0.15)",

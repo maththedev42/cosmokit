@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { Apple } from "lucide-react";
-import { useTranslations } from "@/lib/i18n";
+import { useTranslations, useLocale } from "@/lib/i18n";
 
 const APP_STORE_URL =
   "https://apps.apple.com/app/cosmokit-tools/id6756494471?mt=12";
@@ -13,6 +13,7 @@ export function Footer() {
   const tNav = useTranslations("Navbar");
   const tSup = useTranslations("Support");
   const tSug = useTranslations("Suggest");
+  const locale = useLocale();
   const currentYear = new Date().getFullYear();
 
   return (
@@ -23,7 +24,7 @@ export function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-5 gap-8">
           {/* Brand */}
           <div className="md:col-span-2">
-            <Link href="/" className="flex items-center gap-2.5 mb-3 group">
+            <Link href={`/${locale}/`} className="flex items-center gap-2.5 mb-3 group">
               <Image
                 src="/icon.png"
                 alt="CosmoKit"
@@ -42,7 +43,7 @@ export function Footer() {
               href={APP_STORE_URL}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 text-xs text-muted-foreground/60 hover:text-violet-light transition-colors"
+              className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-violet-light transition-colors"
             >
               <Apple className="h-3 w-3" />
               {t("appStore")}
@@ -51,13 +52,13 @@ export function Footer() {
 
           {/* Product */}
           <div>
-            <h4 className="text-sm font-semibold text-foreground mb-3">
+            <h3 className="text-sm font-semibold text-foreground mb-3">
               {t("product")}
-            </h4>
+            </h3>
             <ul className="space-y-2">
               <li>
                 <Link
-                  href="#features"
+                  href={`/${locale}/#features`}
                   className="text-sm text-muted-foreground hover:text-violet-light transition-colors duration-200"
                 >
                   {tNav("features")}
@@ -65,7 +66,7 @@ export function Footer() {
               </li>
               <li>
                 <Link
-                  href="#pricing"
+                  href={`/${locale}/#pricing`}
                   className="text-sm text-muted-foreground hover:text-violet-light transition-colors duration-200"
                 >
                   {tNav("pricing")}
@@ -81,7 +82,7 @@ export function Footer() {
               </li>
               <li>
                 <Link
-                  href="#faq"
+                  href={`/${locale}/#faq`}
                   className="text-sm text-muted-foreground hover:text-violet-light transition-colors duration-200"
                 >
                   {tNav("faq")}
@@ -110,13 +111,13 @@ export function Footer() {
 
           {/* Help */}
           <div>
-            <h4 className="text-sm font-semibold text-foreground mb-3">
+            <h3 className="text-sm font-semibold text-foreground mb-3">
               {t("help")}
-            </h4>
+            </h3>
             <ul className="space-y-2">
               <li>
                 <Link
-                  href="/support"
+                  href={`/${locale}/support/`}
                   className="text-sm text-muted-foreground hover:text-violet-light transition-colors duration-200"
                 >
                   {tSup("label")}
@@ -124,7 +125,7 @@ export function Footer() {
               </li>
               <li>
                 <Link
-                  href="/suggest"
+                  href={`/${locale}/suggest/`}
                   className="text-sm text-muted-foreground hover:text-violet-light transition-colors duration-200"
                 >
                   {tSug("label")}
@@ -135,13 +136,13 @@ export function Footer() {
 
           {/* Legal */}
           <div>
-            <h4 className="text-sm font-semibold text-foreground mb-3">
+            <h3 className="text-sm font-semibold text-foreground mb-3">
               {t("legal")}
-            </h4>
+            </h3>
             <ul className="space-y-2">
               <li>
                 <Link
-                  href="/privacy"
+                  href={`/${locale}/privacy/`}
                   className="text-sm text-muted-foreground hover:text-violet-light transition-colors duration-200"
                 >
                   {t("privacy")}
@@ -149,7 +150,7 @@ export function Footer() {
               </li>
               <li>
                 <Link
-                  href="/terms"
+                  href={`/${locale}/terms/`}
                   className="text-sm text-muted-foreground hover:text-violet-light transition-colors duration-200"
                 >
                   {t("terms")}
@@ -160,10 +161,10 @@ export function Footer() {
         </div>
 
         <div className="mt-12 pt-6 border-t border-border/30 flex flex-col sm:flex-row justify-between items-center gap-4">
-          <p className="text-xs text-muted-foreground/50">
+          <p className="text-xs text-muted-foreground">
             {t("copyright", { year: currentYear })}
           </p>
-          <p className="text-xs text-muted-foreground/50">
+          <p className="text-xs text-muted-foreground">
             {t("builtWith")}
           </p>
         </div>

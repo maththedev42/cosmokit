@@ -5,7 +5,7 @@ export const metadata: Metadata = {
   title: "Location & GPS Simulation | CosmoKit",
   description:
     "Set any GPS coordinate or simulate movement on the iOS Simulator to test maps, geofencing and location-aware features without leaving your desk.",
-  alternates: { canonical: "https://usecosmoskittool.com/location" },
+  alternates: { canonical: "https://usecosmoskittool.com/location/" },
 };
 
 export default function LocationPage() {

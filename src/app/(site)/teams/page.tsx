@@ -9,7 +9,7 @@ export const metadata: Metadata = {
   title: "CosmoKit for Teams | Volume licensing",
   description:
     "Buy CosmoKit Pro for a whole iOS team with one invoice. Volume Lifetime seats through Apple Business Manager, no per-seat subscription admin.",
-  alternates: { canonical: "https://usecosmoskittool.com/teams" },
+  alternates: { canonical: "https://usecosmoskittool.com/teams/" },
 };
 
 const POINTS = [

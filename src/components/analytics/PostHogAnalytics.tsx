@@ -70,7 +70,7 @@ export function PostHogAnalytics() {
   return (
     <Script
       src={`${ASSETS_HOST}/static/array.js`}
-      strategy="afterInteractive"
+      strategy="lazyOnload"
       onLoad={() => {
         const posthog = client();
         if (!posthog) return;

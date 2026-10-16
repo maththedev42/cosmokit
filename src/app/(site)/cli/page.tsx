@@ -19,7 +19,7 @@ export const metadata: Metadata = {
   description:
     "Free, open source CLI for the iOS Simulator. Boot simulators, take screenshots, record video, set GPS coordinates and open deep links from a Makefile, a git hook or CI. Install with Homebrew.",
   alternates: {
-    canonical: "https://usecosmoskittool.com/cli",
+    canonical: "https://usecosmoskittool.com/cli/",
   },
 };
 
