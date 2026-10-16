@@ -25,7 +25,7 @@
     "ctaFeatures": "Explorar Características",
     "subtext": "Plan gratuito disponible · macOS 14.7+ · Requiere Xcode",
     "heroImage": "/screenshots/store/es/overview.webp",
-    "heroImageAlt": "Visual principal del espacio de trabajo de CosmoKit que muestra el panel de control nativo de macOS, las herramientas del simulador y el panel de productividad definitivo para desarrolladores de iOS"
+    "heroImageAlt": "CosmoKit, el kit de herramientas del Simulador iOS para Mac, con los paneles de deep links y de captura junto al Simulador iOS"
   },
   "MacOnly": {
     "body": "CosmoKit es una app para Mac. Necesita macOS 14.7 o posterior, Xcode y el Simulador de iOS, así que no funcionará en este dispositivo.",
@@ -154,7 +154,7 @@
     "title": "Precios simples y {highlight}",
     "titleHighlight": "transparentes",
     "subtitle": "Comienza gratis, mejora cuando necesites más. Todos los planes incluyen todas las actualizaciones futuras.",
-    "proIntro": "El plan gratuito es tuyo para siempre: un simulador, capturas con marca de agua y 5 elementos guardados por herramienta. Pro viene en todos los planes de pago y quita esos límites, con simuladores y perfiles ilimitados, sin marca de agua, proxy de red y rutas de ubicación.",
+    "proIntro": "El plan gratuito es tuyo para siempre: un simulador a la vez, capturas con marca de agua, algunas sesiones de proxy para probarlo y hasta 5 elementos guardados de push, deep links y ubicaciones. Pro viene en todos los planes de pago y quita esos límites: varios simuladores, sin marca de agua, proxy de red sin límite de sesiones, simulación de rutas y perfiles de app ilimitados.",
     "free": {
       "name": "Gratuito",
       "price": "€0",
@@ -269,7 +269,7 @@
     }
   },
   "Footer": {
-    "description": "El compañero definitivo para desarrolladores iOS en macOS. Pruebas en simulador simplificadas.",
+    "description": "CosmoKit es un kit de herramientas para el Simulador iOS en Mac: proxy HTTPS, notificaciones push, capturas de pantalla, video, simulación de GPS y servidor MCP para agentes de IA.",
     "appStore": "Disponible en la Mac App Store",
     "product": "Producto",
     "help": "Ayuda",

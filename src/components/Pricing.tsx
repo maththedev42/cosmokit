@@ -63,7 +63,7 @@ export function Pricing() {
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
             {t("subtitle")}
           </p>
-          <p className="text-sm text-muted-foreground/80 max-w-2xl mx-auto mt-4 leading-relaxed">
+          <p className="text-sm text-muted-foreground max-w-2xl mx-auto mt-4 leading-relaxed">
             {t("proIntro")}
           </p>
         </motion.div>
@@ -154,7 +154,7 @@ export function Pricing() {
           ))}
         </div>
 
-        <p className="text-center text-sm text-muted-foreground/70 mt-10">
+        <p className="text-center text-sm text-muted-foreground mt-10">
           {t("footnote")}
         </p>
       </div>

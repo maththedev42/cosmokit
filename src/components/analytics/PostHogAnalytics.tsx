@@ -23,6 +23,12 @@ type PostHogClient = {
   capture: (event: string, properties?: Record<string, unknown>) => void;
 };
 
+// The library loads lazily (idle after `load`), so an App Store click can land
+// before it exists. Those captures wait here and are sent right after init;
+// the CTAs open the store in a new tab, so this page is still around to send
+// them.
+const pending: Array<[string, Record<string, unknown>]> = [];
+
 function client(): PostHogClient | null {
   if (typeof window === "undefined") return null;
   const w = window as unknown as { posthog?: PostHogClient };
@@ -54,10 +60,10 @@ export function PostHogAnalytics() {
       const target = event.target as HTMLElement | null;
       const link = target?.closest?.('a[href*="apps.apple.com"]') as HTMLAnchorElement | null;
       if (!link) return;
-      client()?.capture("app_store_click", {
-        href: link.href,
-        path: window.location.pathname,
-      });
+      const props = { href: link.href, path: window.location.pathname };
+      const posthog = client();
+      if (posthog) posthog.capture("app_store_click", props);
+      else pending.push(["app_store_click", props]);
     };
     document.addEventListener("click", onClick, true);
     return () => document.removeEventListener("click", onClick, true);
@@ -93,6 +99,10 @@ export function PostHogAnalytics() {
           cosmohq_app: "cosmokit",
           cosmohq_surface: "landing",
         });
+        // After register, so queued clicks carry cosmohq_app too.
+        for (const [event, props] of pending.splice(0)) {
+          posthog.capture(event, props);
+        }
       }}
     />
   );

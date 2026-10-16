@@ -25,7 +25,7 @@
     "ctaFeatures": "Explorar Recursos",
     "subtext": "Plano gratuito disponível · macOS 14.7+ · Requer Xcode",
     "heroImage": "/screenshots/store/pt-BR/overview.webp",
-    "heroImageAlt": "Visual principal do CosmoKit mostrando o painel de controle nativo no macOS, ferramentas de simulador e o workspace de produtividade para desenvolvedores iOS"
+    "heroImageAlt": "CosmoKit, o kit de ferramentas do Simulador iOS para Mac, com os painéis de deep links e de captura ao lado do Simulador iOS"
   },
   "MacOnly": {
     "body": "O CosmoKit é um app para Mac. Ele precisa de macOS 14.7 ou superior, Xcode e o Simulador do iOS, então não vai funcionar neste dispositivo.",
@@ -154,7 +154,7 @@
     "title": "Preços simples e {highlight}",
     "titleHighlight": "transparentes",
     "subtitle": "Comece grátis, faça upgrade quando precisar. Todos os planos incluem todas as atualizações futuras.",
-    "proIntro": "O plano gratuito é seu para sempre: um simulador, capturas com marca d'água e 5 itens salvos por ferramenta. O Pro vem em todos os planos pagos e tira esses limites, com simuladores e perfis ilimitados, sem marca d'água, proxy de rede e rotas de localização.",
+    "proIntro": "O plano gratuito é seu para sempre: um simulador por vez, capturas com marca d'água, algumas sessões de proxy para testar e até 5 itens salvos de push, deep links e localizações. O Pro vem em todos os planos pagos e libera esses limites: vários simuladores, sem marca d'água, proxy de rede sem limite de sessões, simulação de rotas e perfis de app ilimitados.",
     "free": {
       "name": "Gratuito",
       "price": "R$ 0",
@@ -269,7 +269,7 @@
     }
   },
   "Footer": {
-    "description": "O companheiro definitivo para desenvolvedores iOS no macOS. Teste no simulador simplificado.",
+    "description": "O CosmoKit é um kit de ferramentas para o Simulador iOS no Mac: proxy HTTPS, notificações push, capturas de tela, vídeo, simulação de GPS e servidor MCP para agentes de IA.",
     "appStore": "Disponível na Mac App Store",
     "product": "Produto",
     "help": "Ajuda",

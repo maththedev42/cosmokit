@@ -118,7 +118,7 @@ export function PlatformDownloads() {
             </div>
           </div>
 
-          <div className="mt-8 flex items-center justify-center gap-6 text-sm text-muted-foreground/60">
+          <div className="mt-8 flex items-center justify-center gap-6 text-sm text-muted-foreground">
             <span>{t("info1")}</span>
             <span className="w-1 h-1 rounded-full bg-muted-foreground/20" />
             <span>{t("info2")}</span>

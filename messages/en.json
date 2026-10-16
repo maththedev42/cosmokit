@@ -25,7 +25,7 @@
     "ctaFeatures": "Explore Features",
     "subtext": "Free tier available · macOS 14.7+ · Requires Xcode",
     "heroImage": "/screenshots/store/en/overview.webp",
-    "heroImageAlt": "CosmoKit's main workspace visual showing the native macOS control panel, simulator tools, and the ultimate productivity dashboard for iOS developers"
+    "heroImageAlt": "CosmoKit, the iOS Simulator toolkit for Mac, with its deep links and camera capture panels docked beside the iOS Simulator"
   },
   "MacOnly": {
     "body": "CosmoKit is a Mac app. It needs macOS 14.7 or later, Xcode and the iOS Simulator, so it will not run on this device.",
@@ -154,7 +154,7 @@
     "title": "Simple, {highlight} pricing",
     "titleHighlight": "transparent",
     "subtitle": "Start free, upgrade when you need more. All plans include every future update.",
-    "proIntro": "Free is yours forever: one simulator, watermarked captures and 5 saved entries per tool. Pro is included in every paid plan and removes those limits, adding unlimited simulators and profiles, no watermark, the network proxy and location routes.",
+    "proIntro": "Free is yours forever: one simulator at a time, watermarked captures, a few proxy sessions to try it, and up to 5 saved push payloads, deep links and locations. Pro comes with every paid plan and lifts those limits: multiple simulators, no watermark, the network proxy with no session cap, route simulation and unlimited app profiles.",
     "free": {
       "name": "Free",
       "price": "$0",
@@ -269,7 +269,7 @@
     }
   },
   "Footer": {
-    "description": "The ultimate macOS companion for iOS developers. Simulator testing made easy.",
+    "description": "CosmoKit is an iOS Simulator toolkit for Mac: HTTPS proxy, push notifications, screenshots, video, GPS simulation and an MCP server for AI agents.",
     "appStore": "Available on the Mac App Store",
     "product": "Product",
     "help": "Help",

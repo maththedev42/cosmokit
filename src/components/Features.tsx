@@ -163,7 +163,7 @@ export function Features() {
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
             {t.rich("subtitle", {
               command: () => (
-                <code className="text-xs px-1.5 py-0.5 rounded bg-violet-DEFAULT/10 font-mono text-violet-light/70">
+                <code className="text-xs px-1.5 py-0.5 rounded bg-violet-DEFAULT/10 font-mono text-violet-light">
                   xcrun simctl
                 </code>
               ),
