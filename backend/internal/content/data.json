@@ -259,6 +259,107 @@
         }
       ],
       "publishedAt": "2026-09-09T00:00:00Z"
+    },
+    {
+      "version": "5.0.0",
+      "title": {
+        "en": "AI agents inside CosmoKit",
+        "pt": "Agentes de IA dentro do CosmoKit",
+        "es": "Agentes de IA dentro de CosmoKit"
+      },
+      "items": [
+        {
+          "icon": "bubble.left.and.bubble.right",
+          "iconColor": "purple",
+          "localizations": {
+            "en": {
+              "title": "Chat with your AI agent, beside the panel",
+              "description": "Talk to Claude Code, Cursor or any MCP agent in a small window next to CosmoKit, watch it drive the Simulator and send it screenshots."
+            },
+            "pt": {
+              "title": "Converse com o seu agente de IA, do lado do painel",
+              "description": "Fale com o Claude Code, o Cursor ou qualquer agente MCP numa janela do lado do CosmoKit, veja ele controlar o Simulator e mande screenshots."
+            },
+            "es": {
+              "title": "Habla con tu agente de IA, junto al panel",
+              "description": "Habla con Claude Code, Cursor o cualquier agente MCP en una ventana junto a CosmoKit, mira cómo controla el Simulator y envíale screenshots."
+            }
+          }
+        },
+        {
+          "icon": "network",
+          "iconColor": "blue",
+          "localizations": {
+            "en": {
+              "title": "Proxy in one switch, labeled by simulator",
+              "description": "One toggle starts the proxy and routes the Mac through it. Requests now show which simulator sent them, so the simulator filter works. Update the helper to 1.1.1."
+            },
+            "pt": {
+              "title": "Proxy em um switch, com o simulador de cada request",
+              "description": "Um toggle liga o proxy e roteia o Mac por ele. As requests agora mostram qual simulador as enviou, então o filtro por simulador funciona. Atualize o helper para 1.1.1."
+            },
+            "es": {
+              "title": "Proxy en un switch, con el simulador de cada request",
+              "description": "Un toggle arranca el proxy y enruta el Mac por él. Las requests ahora muestran qué simulador las envió, así que el filtro por simulador funciona. Actualiza el helper a 1.1.1."
+            }
+          }
+        },
+        {
+          "icon": "video",
+          "iconColor": "orange",
+          "localizations": {
+            "en": {
+              "title": "Recordings with sound",
+              "description": "Videos capture the simulator's audio, mixed with your microphone for a voiceover, and Show Touches now works with the Xcode 27 Device Hub."
+            },
+            "pt": {
+              "title": "Gravações com som",
+              "description": "Os vídeos capturam o áudio do simulador, misturado com o seu microfone para narrar, e o Show Touches agora funciona com o Device Hub do Xcode 27."
+            },
+            "es": {
+              "title": "Grabaciones con sonido",
+              "description": "Los vídeos capturan el audio del simulador, mezclado con tu micrófono para narrar, y Show Touches ahora funciona con el Device Hub de Xcode 27."
+            }
+          }
+        },
+        {
+          "icon": "hand.raised.fill",
+          "iconColor": "green",
+          "localizations": {
+            "en": {
+              "title": "Permissions, redesigned",
+              "description": "One row per service, with Grant All, Revoke All and Reset All at the top."
+            },
+            "pt": {
+              "title": "Permissões redesenhadas",
+              "description": "Uma linha por serviço, com Liberar tudo, Negar tudo e Resetar tudo no topo."
+            },
+            "es": {
+              "title": "Permisos rediseñados",
+              "description": "Una fila por servicio, con Conceder todo, Denegar todo y Resetear todo arriba."
+            }
+          }
+        },
+        {
+          "icon": "list.bullet.rectangle",
+          "iconColor": "blue",
+          "localizations": {
+            "en": {
+              "title": "Live Log per simulator",
+              "description": "Choose which simulator to follow in the Live Log, or stream all of them. Push and deep link forms now prefill from the selected app."
+            },
+            "pt": {
+              "title": "Live Log por simulador",
+              "description": "Escolha qual simulador acompanhar no Live Log ou veja todos. Os formulários de push e deep link já vêm preenchidos com o app selecionado."
+            },
+            "es": {
+              "title": "Live Log por simulador",
+              "description": "Elige qué simulador seguir en el Live Log o míralos todos. Los formularios de push y deep link se rellenan con la app seleccionada."
+            }
+          }
+        }
+      ],
+      "publishedAt": "2026-10-18T00:00:00Z"
     }
   ],
   "notifications": [
