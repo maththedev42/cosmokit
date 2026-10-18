@@ -363,14 +363,14 @@
     }
   },
   "helper": {
-    "latestVersion": "1.1.0",
+    "latestVersion": "1.1.1",
     "downloadUrl": "https://usecosmoskittool.com/downloads/CosmoKitProxyHelper.pkg",
     "blockProxy": false,
     "minRequiredVersion": null,
     "releaseNotes": {
-      "en": "Boots the simulator you pick from CosmoKit. The app is sandboxed and cannot boot one itself, so without the helper Simulator.app reopens whichever device it had open last. Includes everything in 1.0.9.",
-      "pt": "Inicia o simulador que você escolhe no CosmoKit. O app roda em sandbox e não consegue iniciar um sozinho, então sem o helper o Simulator.app reabre o último dispositivo que estava aberto. Inclui tudo da 1.0.9.",
-      "es": "Inicia el simulador que eliges en CosmoKit. La app está en sandbox y no puede iniciar uno por sí misma, así que sin el helper Simulator.app reabre el último dispositivo que tuvo abierto. Incluye todo lo de 1.0.9."
+      "en": "Fixes proxy requests not being labeled with the simulator that sent them, so the simulator filter in Proxy Requests now works. Includes everything in 1.1.0.",
+      "pt": "Corrige requisições do proxy que não mostravam de qual simulador vieram, então o filtro por simulador em Requisições do Proxy agora funciona. Inclui tudo da 1.1.0.",
+      "es": "Corrige las solicitudes del proxy que no indicaban de qué simulador venían, así que el filtro por simulador en Solicitudes del proxy ahora funciona. Incluye todo lo de 1.1.0."
     }
   }
 }
